@@ -1,0 +1,43 @@
+% OSNR = db(P_out(size(P_out,1),1 : length(wl_s)) ./ P_ase);
+
+% расчет через OSNR
+% nf = -db(h * c^2 * 0.1 ./ wl_s.^3 * 10^21) + P_in - OSNR;
+
+% расчет минимального шум-фактора 
+% n_sp = 1 ./(1 - (o_e_p(1) + o_e_p(2)) .* o_a_s ./ (o_a_p(1) + o_a_p(2)) ./ o_e_s);
+% g = 10.^(G/10);
+% f = (1 + 2.*n_sp.*(g-1))./g;
+% nf = db(f);
+
+% Desurvire, 1994 - p.98-114; 600-606
+% P_sat_P   = (h * c * pi .* w_p_edf.^2 * 10^34) ./ (wl_p.*(o_a_p + o_e_p)) / tau;
+% p_0       = undbm(P_p) ./ P_sat_P;
+% p_L       = P_out(size(P_out,1), size(P_out,2) - length(wl_p) + 1 : size(P_out,2)) ./ P_sat_P;
+% eta_s     = o_e_s ./ o_a_s;
+% eta_p     = mean(o_e_p) / mean(o_a_p);
+% alpha_s   = o_a_s * n_sum;
+% alpha_p   = mean(o_a_p) * n_sum;
+% delta     = eta_s - eta_p;
+% ratio     = alpha_s ./ alpha_p;
+% fun_for_I = @(x) exp(ratio .* delta ./ (1 + eta_p) .* x) ./ (x.^ratio);
+% I = integral(fun_for_I,mean(p_L), mean(p_0),'ArrayValued',true);
+% n_eq = ratio .* eta_s / (1 + eta_p) .* I .* exp(ratio .* (log(mean(p_0)) - delta ./ ...
+% (1 + eta_p) .* mean(p_0)));
+% f = 2 .* n_eq + 1 ./ G;
+
+% доп. потери, Desurvire, 1994 - p.98-114; 600-606
+% epsilon_p = mean(0.5 ./ o_a_p);
+% epsilon_s = 0.5 ./ o_a_s;
+% b         = (1 + epsilon_p) / epsilon_p;
+% C         = (delta / (1 + eta_p) + epsilon_s) / (1 + epsilon_s);
+% u = ratio .* (1 + epsilon_s) / (1 + epsilon_p);
+% fun_for_I = @(x) x.^(-u) ./ (b + x).^(1 + u .*(b .* C - 1));
+% I = integral(fun_for_I, mean(p_L), mean(p_0), 'ArrayValued', true) / epsilon_p;
+% N = ratio .* eta_s / (1 + eta_p) .* I .* exp(ratio .* (1 + epsilon_s) / (1 + epsilon_p)...
+% .* ((b * C - 1) * log(mean(p_L) + b) + log(mean(p_L))));
+% n_eq = N ./ undb(G);
+% Gain = exp(ratio .* (1 + epsilon_s) / (1 + epsilon_p) .* ((b * C - 1) * log((b + mean(p_L)) ...
+% /(b+mean(p_0)))-log(mean(p_0)/mean(p_L))));
+% Gain = db(Gain);
+% n_eq = N ./ Gain;
+% f = 2 .* n_eq + 1 ./ G;
