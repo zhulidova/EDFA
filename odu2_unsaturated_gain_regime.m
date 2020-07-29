@@ -27,7 +27,7 @@ p.PF                = P(N.S+N.ASE+1:N.S+N.ASE+N.PF,1) ./ P_sat.PF';             
 overlap.sum_ES      = sum(p.S' .* sigma.ES ./ (sigma.AS + sigma.ES)) +...       % слагаемое с усилением для сигнала и ASE
     sum(p.ASEF' .* sigma.EASE ./ (sigma.AASE + sigma.EASE));
 overlap.sum_all     = sum(p.S) + sum(p.ASEF) + sum(p.PF);                       % сумма всех приведенных мощностей
-overlap.sum_EP      =  sum(p.PF' .* sigma.EPF ./ (sigma.APF + sigma.EPF));      % слагаемое с усилением для накачки
+overlap.sum_EP      = sum(p.PF' .* sigma.EPF ./ (sigma.APF + sigma.EPF));      % слагаемое с усилением для накачки
 overlap.sum_AP      = sum(p.PF' .* sigma.APF ./ (sigma.APF + sigma.EPF));       % слагаемое с поглощением для накачки
 
 if isempty(P_in.PB) == 0
