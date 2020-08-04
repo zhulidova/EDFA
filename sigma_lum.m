@@ -11,14 +11,13 @@ function sigma = sigma_lum(T, wl, ph_const)
 % sigma        - структура сечений люминесценции (sigma.ES, sigma.EPF, sigma.EASE, sigma.EPB)
 %и поглощения (sigma.AS, sigma.APF, sigma.AASE, sigma.APB)
 param        = sigma_lum_param();
-CrossTemp    = 2.5 * param(:,3) .* exp((-1) * 10^(-21) * param(:,2) / ph_const.k / T);
+CrossTemp    = 2.6 * param(:,3) .* exp((-1) * 10^(-21) *0.9 *param(:,2) / ph_const.k / T);
 
 % сглаживание
 a            = 4;                                             % параметр сглаживания            
 coeff        = ones(1, a) / a;
 avgCrossTemp = filter(coeff, 1, CrossTemp);
-cross_abs    = avgCrossTemp .* exp((-1) * 10^4 * (1.602 * 0.852 - 6.626 ...
-    * 300 ./ param(:,1)) / (1.38 * T));
+cross_abs    = 0.85 * avgCrossTemp .* exp((-1) * (ph_const.eV * 0.847 - ph_const.h * ph_const.c * 10^9 ./ param(:,1)) / (ph_const.k * T));
 
 % plot(param(:,1),[CrossTemp avgCrossTemp]);
 % hold on;
