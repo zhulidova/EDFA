@@ -18,7 +18,7 @@ clear all;
 % low_gain_regime - механический выбор режима слабого сигнала (упрощенна€ система уравнений),
 %0 - общий случай (без приближени€), 1 - режим слабого сигнала
 
-P_s_sum = -28;    % массив суммарных входных мощностей сигнала
+P_s_sum = 2;    % массив суммарных входных мощностей сигнала
                                 
 % параметры сигнала
 wl.S                   = [1529.55 1532.52 1537.24 1541.96 1547.56 1552.36 1556.36 1560.44];      % длины волн сигнала, нм
@@ -38,10 +38,10 @@ P_in.PB                = [];                                                    
 
 % параметры активного волокна и системы
 r_edf                  = 2.9E-6 / 2;                                                      % радиус сердцевины, м
-NA                     = 0.28;                                                            % числова€ апертура активного волокна
-n                      = 80;                                                              % концентраци€ ионов эрби€, ppm
+NA                     = 0.26;                                                            % числова€ апертура активного волокна
+n                      = 140;                                                              % концентраци€ ионов эрби€, ppm
 L                      = 9;                                                               % длина активного волокна, м
-T_c                    = 25;                                                             % температура среды, ∞—
+T_c                    = 25;                                                              % температура среды, ∞—
 splices.wdm_p          = 0.15;                                                            % потери на wdm дл€ накачки (datasheet), дЅм                         
 splices.wdm_s          = 0.2;                                                             % потери на wdm дл€ чигнала (datasheet), дЅм                  
 splices.fiber          = 0.5;                                                             % потери на сварке
@@ -51,20 +51,20 @@ low_gain_regime        = 0;                                                     
 [G, nf, Pout]          = edfa_main(P_in, wl, n, low_gain_regime, L, T_c, r_edf, NA, splices);
 
 % сглаживание результатов моделировани€
-% [wl_smooth.Model, G_smooth.Model, nf_smooth.Model] = smooth_res(wl.S, G, nf);   
+[wl_smooth.Model, G_smooth.Model, nf_smooth.Model] = smooth_res(wl.S, G, nf);   
 
 % чтение экспериментальных данных
 EXP                    = exp_res(P_s_sum, T_c, dbm(sum(undbm(P_in.PF))));
 delta_G = G - EXP(2,:);
 delta_nf = nf - EXP(3,:);
 
-% [wl_smooth.Exp, G_smooth.Exp, nf_smooth.Exp]       = smooth_res(EXP(1,:), EXP(2,:), EXP(3,:));
+[wl_smooth.Exp, G_smooth.Exp, nf_smooth.Exp]       = smooth_res(EXP(1,:), EXP(2,:), EXP(3,:));
 
 %% оформление графиков
-% create_graf(wl_smooth.Model, G_smooth.Model, "model", 'Gain', P_s_sum, 1, 2); 
-% hold on;
-% create_graf(wl_smooth.Exp, G_smooth.Exp, "exp", 'Gain', P_s_sum, 1, 2); 
-% hold on;
-% create_graf(wl_smooth.Model, nf_smooth.Model, "model", 'NF', P_s_sum, 2, 2); 
-% hold on;
-% create_graf(wl_smooth.Exp, nf_smooth.Exp, "exp", 'NF', P_s_sum, 2, 2); 
+create_graf(wl_smooth.Model, G_smooth.Model, "model", 'Gain', P_s_sum, 1, 1); 
+hold on;
+create_graf(wl_smooth.Exp, G_smooth.Exp, "exp", 'Gain', P_s_sum, 1, 1); 
+hold on;
+create_graf(wl_smooth.Model, nf_smooth.Model, "model", 'NF', P_s_sum, 2, 1); 
+hold on;
+create_graf(wl_smooth.Exp, nf_smooth.Exp, "exp", 'NF', P_s_sum, 2, 1); 

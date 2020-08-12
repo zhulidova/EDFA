@@ -32,7 +32,7 @@ function [G, nf, P_out] = edfa_main(P_in, wl, n, low_gain_regime, L, T_c, r_edf,
 
 ph_const.c             = 299792458;                                             % скорость света    
 ph_const.h             = 6.626E-34;                                             % постоянная Планка
-ph_const.tau           = 0.0102;                                                % время жизни на верхнем уровне
+ph_const.tau           = 0.0102;                                                  % время жизни на верхнем уровне
 ph_const.k             = 1.38 * 10^(-23);                                       % постоянная Больцмана
 ph_const.eV            = 1.602 * 10^(-19);                                      % 1 эВ в Дж
 
@@ -61,14 +61,14 @@ sigma                  = sigma_lum(T, wl, ph_const);                            
             undbm(P_in.PF)]);
         else
 % решение подробной системы уравнений (общий случай)
-            [z, P_out]     = ode45(@(z,P) odu2(z, P, wl, sigma, psi, N, n_sum, ph_const, P_in), [0: 0.1: L],[undbm(P_in.S) undbm(P_in.ASEF) undbm(P_in.PF)]);
+            [z, P_out]     = ode45(@(z,P) odu2(z, P, wl, sigma, psi, N, n_sum, ph_const, P_in, r_edf), [0: 0.1: L],[undbm(P_in.S) undbm(P_in.ASEF) undbm(P_in.PF)]);
         end
         G                  = Gain(P_out(size(P_out,1), 1 : N.S)', P_in.S);      % расчет КУ
         nf                 = NF(P_out(size(P_out,1), N.S + 1 : N.S + N.ASE),... % расчет ШФ
             G, wl, ph_const);                                                    
     else
 % случай встречной накачки или комбинированный случай
-        P_out              = chord_method(L, wl, sigma, psi, N, w_edf, n_sum, P_in, low_gain_regime, ph_const);
+        P_out              = chord_method(L, wl, sigma, psi, N, w_edf, n_sum, P_in, low_gain_regime, ph_const, r_edf);
         G                  = Gain(P_out(size(P_out,1), 1 : N.S)', P_in.S);      % расчет КУ
         nf                 = NF(P_out(size(P_out,1), N.S + 1 : N.S + N.ASE),... % расчет ШФ
             G, wl, ph_const);                                                   

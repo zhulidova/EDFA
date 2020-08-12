@@ -1,7 +1,7 @@
 %% решение краевой задачи с помощью метода хорд (секущих, метод Ньютона)
 % с помощью метода хорд находятся значения мощностей встречной накачки и встречного шума в начале линии
 %(сведение задачи с граничными условиями к задаче Коши)объяснение метода - отчеты по модели EDFA/Жулидова. Отчет от 27.06)
-function P_out = chord_method(L, wl, sigma, psi, N,w_edf, n_sum, P_in, low_gain_regime, ph_const)
+function P_out = chord_method(L, wl, sigma, psi, N,w_edf, n_sum, P_in, low_gain_regime, ph_const, r_edf)
 % Переменные 
 % epsilon           - значение точности итерационного метода
 % ksi1, ksi2        - значения начальных условий для ASE
@@ -31,9 +31,9 @@ epsilon = 1e-6;
             undbm(P_in.PF) ksi2 lamda2]); 
          else 
             % решение подробной системы уравнений (общий случай)
-            [z, P_out1]     = ode45(@(z,P) odu2(z, P, wl, sigma, psi, N, n_sum, ph_const, P_in), [0: 0.1: L],[undbm(P_in.S) undbm(P_in.ASEF)...
+            [z, P_out1]     = ode45(@(z,P) odu2(z, P, wl, sigma, psi, N, n_sum, ph_const, P_in, r_edf), [0: 0.1: L],[undbm(P_in.S) undbm(P_in.ASEF)...
             undbm(P_in.PF) ksi1 lamda1]);  
-            [z, P_out2]     = ode45(@(z,P) odu2(z, P, wl, sigma, psi, N, n_sum, ph_const, P_in), [0: 0.1: L],[undbm(P_in.S) undbm(P_in.ASEF)...
+            [z, P_out2]     = ode45(@(z,P) odu2(z, P, wl, sigma, psi, N, n_sum, ph_const, P_in, r_edf), [0: 0.1: L],[undbm(P_in.S) undbm(P_in.ASEF)...
             undbm(P_in.PF) ksi2 lamda2]); 
          end
         
@@ -60,7 +60,7 @@ epsilon = 1e-6;
         
      else
          % решение подробной системы уравнений (общий случай)
-        [z, P_out]  = ode45(@(z,P) odu2(z, P, wl, sigma, psi, N, n_sum, ph_const, P_in), [0: 0.1: L], [undbm(P_in.S) undbm(P_in.ASEF)...
+        [z, P_out]  = ode45(@(z,P) odu2(z, P, wl, sigma, psi, N, n_sum, ph_const, P_in, r_edf), [0: 0.1: L], [undbm(P_in.S) undbm(P_in.ASEF)...
             undbm(P_in.PF) ksi1 lamda1]);
      end
 end

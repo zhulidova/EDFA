@@ -1,5 +1,5 @@
 %% расчет населенностей верхнего и нижнего энергетических уровней
-function [n1, n2] = population(P, wl, sigma, psi, N, ph_const, P_in)
+function [n1, n2] = population(P, wl, sigma, psi, N, ph_const, P_in, r_edf)
 % Параметры 
 % P_sat   - структура значений мощност насыщения сигнала(P_sat.S), накачки (P_sat.PF и P_sat.PB) и ASE (P_sat.ASE)
 % W12     - вероятность вынужденного перехода с поглощением излучения для сигнала
@@ -13,7 +13,9 @@ P_sat.ASE = (ph_const.h * ph_const.c * 10^34) ./ (wl.ASE .* (sigma.AASE + sigma.
 P_sat.PF  = (ph_const.h * ph_const.c * 10^34) ./ (wl.PF .* (sigma.APF + sigma.EPF));               % мощность насыщения для попутной накачки
 % вероятность вынужденного перехода с поглощением излучения для сигнала и ASE
 W12       = sum(psi.NS .* repmat(P(1: N.S, 1),1,size(psi.NS,2)) .* repmat(sigma.AS',1,size(psi.NS,2))...
-    ./ ((repmat(sigma.AS',1,size(psi.NS,2)) + repmat(sigma.ES',1,size(psi.NS,2))) .* repmat(P_sat.S',1,size(psi.NS,2))));
+    ./ ((repmat(sigma.AS',1,size(psi.NS,2)) + repmat(sigma.ES',1,size(psi.NS,2))) .* repmat(P_sat.S',1,size(psi.NS,2))))+...
+    sum(psi.NASE .* repmat(P(N.S+1: N.S+N.ASE, 1),1,size(psi.NASE,2)) .* repmat(sigma.AASE',1,size(psi.NASE,2))...
+    ./ ((repmat(sigma.AASE',1,size(psi.NASE,2)) + repmat(sigma.EASE',1,size(psi.NASE,2))) .* repmat(P_sat.ASE',1,size(psi.NASE,2))));
 % вероятность вынужденного излучательного перехода для сигнала и ASE 
 W21       = sum(psi.NS .* repmat(P(1: N.S, 1),1,size(psi.NS,2)) .* repmat(sigma.ES',1,size(psi.NS,2))...
     ./ ((repmat(sigma.AS',1,size(psi.NS,2)) + repmat(sigma.ES',1,size(psi.NS,2))) .* repmat(P_sat.S',1,size(psi.NS,2))))+...
@@ -44,6 +46,11 @@ if isempty(P_in.PB) == 0
 end
 
 % населенности верхнего и нижнего уровня    
-n2           = (W12 + R12) ./ (W12 + R12 + W21 + 1 / ph_const.tau + R21);                           % населенностьверхенего уровня
+n2           = (W12 + R12) ./ (W12 + R12 + W21 + 1 / ph_const.tau + R21);                           % населенность верхнего уровня
 n1           = (1 / ph_const.tau + W21 + R21) ./ (W12 + R12 + W21 + 1 / ph_const.tau + R21);        % населенность нижнего уровня
+
+r_length_max = length(r_edf: 10^(-7): 10^(-5));
+r_length_min = length(0: 10^(-7): r_edf);
+n1(1, r_length_min : r_length_max) = zeros(1, r_length_max - r_length_min + 1);
+n2(1, r_length_min : r_length_max) = zeros(1, r_length_max - r_length_min + 1);
 end

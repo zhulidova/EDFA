@@ -29,7 +29,10 @@ grid on;
 formatLegendPower = sprintf("%.0f",P_s_sum);             
 formatLegend1 = "P_{с}^{вх}= ";
 formatLegend2 = " дЅм";
-formatLegend = formatLegend1 + formatLegendPower + formatLegend2;
-legend(formatLegend);
+formatLegendType1                  = ", модель";
+formatLegendType2                  = ", эксперимент";
+formatLegendFin1 = formatLegend1 + formatLegendPower + formatLegend2 + formatLegendType1;
+formatLegendFin2 = formatLegend1 + formatLegendPower + formatLegend2 + formatLegendType2;
+legend(formatLegendFin1, formatLegendFin2);
 title(spec);                                                                        % название графика
 end

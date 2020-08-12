@@ -1,4 +1,4 @@
-function f = odu2(z, P, wl, sigma, psi, N, n_sum, ph_const, P_in)
+function f = odu2(z, P, wl, sigma, psi, N, n_sum, ph_const, P_in, r_edf)
 %% итоговые скоростные уравнения (общий случай)
 % Переменные
 % r   - массив координат радиуса волокна
@@ -13,7 +13,8 @@ function f = odu2(z, P, wl, sigma, psi, N, n_sum, ph_const, P_in)
 r = 0 : 10^(-7) : 10^(-5);                                                 % массив координат радиуса волокна
 N_r = size(r,2);                                                           % размер массива координат радиуса волокна
 
-[n1, n2]   = population(P, wl, sigma, psi, N, ph_const, P_in);                   % расчет населенностей уровней
+[n1, n2]   = population(P, wl, sigma, psi, N, ph_const, P_in, r_edf);                   % расчет населенностей уровней
+
 
 %уравнения для сигнала (dP_s/dz)
 f(1:N.S,1) = 2 * pi * n_sum * trapz(r,(repmat(sigma.ES',1,N_r) .* repmat(n2,N.S,1)...
@@ -22,7 +23,7 @@ f(1:N.S,1) = 2 * pi * n_sum * trapz(r,(repmat(sigma.ES',1,N_r) .* repmat(n2,N.S,
 % уравнения для попутного ASE (dP_ase/dz)
 f(N.S+1:N.S+N.ASE,1)  = 2 * pi * n_sum * (trapz(r,(repmat(sigma.EASE',1,N_r) .* repmat(n2,N.ASE,1)...
     .*(repmat(P(N.S+1: N.S+N.ASE, 1),1,N_r) + repmat(2 * ph_const.h * ph_const.c^2 * 0.1 * 10^18 ./...
-    wl.ASE'.^3,1,N_r)) - repmat(sigma.AASE',1,N_r) .* repmat(n1,N.ASE,1) .* repmat(P(N.S+1: N.S+N.ASE, 1),1,N_r))...
+    wl.ASE'.^3,1, N_r)) - repmat(sigma.AASE',1,N_r) .* repmat(n1,N.ASE,1) .* repmat(P(N.S+1: N.S+N.ASE, 1),1,N_r))...
     .* psi.NASE .* repmat(r,N.ASE,1),2));
 
 % уравнения для попутной накачки (dP_p/dz)
