@@ -51,6 +51,6 @@ n1           = (1 / ph_const.tau + W21 + R21) ./ (W12 + R12 + W21 + 1 / ph_const
 
 r_length_max = length(r_edf: 10^(-7): 10^(-5));
 r_length_min = length(0: 10^(-7): r_edf);
-n1(1, r_length_min : r_length_max) = zeros(1, r_length_max - r_length_min + 1);
-n2(1, r_length_min : r_length_max) = zeros(1, r_length_max - r_length_min + 1);
+n1(1, r_length_min: r_length_max) = zeros(1, r_length_max - r_length_min + 1);
+n2(1, r_length_min: r_length_max) = zeros(1, r_length_max - r_length_min + 1);
 end

@@ -25,14 +25,15 @@ xlabel('ƒлина волны, нм');
 xlim([1529 1561]);
 ylabel(spec + ", дЅ");
 grid on;
+
 % составление легенды с суммарной мощностью сигнала
 formatLegendPower = sprintf("%.0f",P_s_sum);             
-formatLegend1 = "P_{с}^{вх}= ";
-formatLegend2 = " дЅм";
-formatLegendType1                  = ", модель";
-formatLegendType2                  = ", эксперимент";
-formatLegendFin1 = formatLegend1 + formatLegendPower + formatLegend2 + formatLegendType1;
-formatLegendFin2 = formatLegend1 + formatLegendPower + formatLegend2 + formatLegendType2;
+formatLegend1     = "P_{с}^{вх}= ";
+formatLegend2     = " дЅм";
+formatLegendType1 = ", модель";
+formatLegendType2 = ", эксперимент";
+formatLegendFin1  = formatLegend1 + formatLegendPower + formatLegend2 + formatLegendType1;
+formatLegendFin2  = formatLegend1 + formatLegendPower + formatLegend2 + formatLegendType2;
 legend(formatLegendFin1, formatLegendFin2);
 title(spec);                                                                        % название графика
 end

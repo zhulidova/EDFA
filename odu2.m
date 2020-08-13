@@ -13,7 +13,7 @@ function f = odu2(z, P, wl, sigma, psi, N, n_sum, ph_const, P_in, r_edf)
 r = 0 : 10^(-7) : 10^(-5);                                                 % массив координат радиуса волокна
 N_r = size(r,2);                                                           % размер массива координат радиуса волокна
 
-[n1, n2]   = population(P, wl, sigma, psi, N, ph_const, P_in, r_edf);                   % расчет населенностей уровней
+[n1, n2]   = population(P, wl, sigma, psi, N, ph_const, P_in, r_edf);      % расчет населенностей уровней
 
 
 %уравнения для сигнала (dP_s/dz)

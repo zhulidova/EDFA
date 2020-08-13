@@ -32,7 +32,7 @@ function [G, nf, P_out] = edfa_main(P_in, wl, n, low_gain_regime, L, T_c, r_edf,
 
 ph_const.c             = 299792458;                                             % скорость света    
 ph_const.h             = 6.626E-34;                                             % постоянная Планка
-ph_const.tau           = 0.0102;                                                  % время жизни на верхнем уровне
+ph_const.tau           = 0.0102;                                                % время жизни на верхнем уровне
 ph_const.k             = 1.38 * 10^(-23);                                       % постоянная Больцмана
 ph_const.eV            = 1.602 * 10^(-19);                                      % 1 эВ в Дж
 
@@ -48,8 +48,9 @@ sigma                  = sigma_lum(T, wl, ph_const);                            
 
     %% учет доп. потерь  
 
-[P_in.S, P_in.PF] = splice_loss(P_in.S, P_in.PF, wl, r_edf, splices, NA);      % реальные входные мощности сигнала и накачки
-                                                                              %с учетом потерь на сварках и WDM
+[P_in.S, P_in.PF] = splice_loss(P_in.S, P_in.PF, wl, r_edf, splices, NA);       % реальные входные мощности сигнала и накачки
+                                                                                %с учетом потерь на сварках и WDM
+P_in.ASEF = ase_in(wl,ph_const, sigma,P_in.PF, w_edf);
 
 %% решение сиситемы ОДУ
     tStart = cputime;                                                           % старт таймера
@@ -68,12 +69,13 @@ sigma                  = sigma_lum(T, wl, ph_const);                            
             G, wl, ph_const);                                                    
     else
 % случай встречной накачки или комбинированный случай
+        P_in.ASEB = ase_in(wl,ph_const, sigma,P_in.PB, w_edf);
         P_out              = chord_method(L, wl, sigma, psi, N, w_edf, n_sum, P_in, low_gain_regime, ph_const, r_edf);
         G                  = Gain(P_out(size(P_out,1), 1 : N.S)', P_in.S);      % расчет КУ
         nf                 = NF(P_out(size(P_out,1), N.S + 1 : N.S + N.ASE),... % расчет ШФ
             G, wl, ph_const);                                                   
     end
-    P_out = P_out / undb(splices.fiber) / undb(splices.wdm_s);      % реальные входные мощности сигнала и накачки
+    P_out                  = P_out / undb(splices.fiber) / undb(splices.wdm_s); % реальные входные мощности сигнала и накачки
     time                   = cputime - tStart;                                  % конец таймера
     formatSpec             = 'Система ОДУ решена за %f секунд\n';                           
     fprintf(formatSpec,time)

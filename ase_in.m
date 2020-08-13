@@ -1,0 +1,21 @@
+%% ‘ункци€ расчета входной мощности ASE
+%(Desurvire, appendix R)
+% P_sat_P   - массив значений мощности насыщени€ дл€ накачки
+% P_sat_ASE - массив значений мощности насыщени€ дл€ спектра ASE
+% n_sp      - массив коэффициентов спонтанной люминесценции, имеет размер массива ASE
+% p_ase     - мощность ASE в ¬т
+% P_ase     - мощность ASE в дЅм
+
+function P_ase = ase_in(wl,ph_const, sigma,P_in, w_edf) 
+
+P_sat_P   = (ph_const.h * ph_const.c * 10^34 * pi .* w_edf.PF.^2)...               % мощность насыщени€ дл€ накачки
+    ./ (wl.PF .* (sigma.APF + sigma.EPF) * ph_const.tau);
+P_sat_ASE = (ph_const.h * ph_const.c * 10^34 * pi .* w_edf.ASE.^2)...              % мощность насыщени€ дл€ ASE
+    ./ (wl.ASE .* (sigma.AASE + sigma.EASE) * ph_const.tau);
+
+n_sp      = 1 ./ (1 - sum(sigma.EPF./ sigma.APF) .* sigma.AASE  ./ sigma.EASE...   % коэффициент спонтанной люминесценции
+    - sum((1 +sigma.EPF./ sigma.APF) .*P_sat_P./P_in).* sigma.AASE  ./ sigma.EASE);
+
+p_ase     = 4 * n_sp .* ph_const.c * 0.1 * 10^9 ./ wl.ASE.^2 .* P_sat_ASE * 10^(-16); % мощность ASE в ¬т
+P_ase     = dbm(p_ase);        % мощность ASE в дЅм
+end
