@@ -13,6 +13,8 @@ function [G, nf, P_out] = edfa_main(P_in, wl, n, low_gain_regime, L, T_c, r_edf,
 % psi           - структура с функциями распередения интенсивности по радиусу волокна для сигнала (psi.S),
 %накачки (psi.PF и psi.PB), ASE (psi.ASE) и нормированными функциями распередения (psi.NS, psi.PF, psi.PB, psi.ASE) 
 % w_edf         - структура модовых радиусов для сигнала (w_edf.S), накачки (w_edf.PF и w_edf.PB) и ASE (w_edf.ASE) 
+% P_in.ASEF     - массив мощностей попутного ASE (на заданном массиве длин волн) в 0, дБм 
+% P_in.ASEB     - массив мощностей встречной накачки в L, дБм
 
 % Функции
 % concentration(n)              - функция пересчета концентрации из ppm в м^(-3)
@@ -22,6 +24,7 @@ function [G, nf, P_out] = edfa_main(P_in, wl, n, low_gain_regime, L, T_c, r_edf,
 %каждой дины волны (зависит от радиуса сердцевины и числовой апертуры активного волокна)
 % splice_loss(P_in.S,..., NA)   - функция расчета реальных входных мощностей сигнала и накачки с учетом потерь
 %на сварках и WDM
+% ase_in(wl,...,w_edf)          - функция расчета начальных значений мощности ASE
 % odu2_unsaturated_gain_regime  - функция расчета значений производных для скоростных уравнений в приближении
 %слабого сигнала 
 % odu2                          - функция расчета значений производных для скоростных уравнений в общем случае 
@@ -50,7 +53,7 @@ sigma                  = sigma_lum(T, wl, ph_const);                            
 
 [P_in.S, P_in.PF] = splice_loss(P_in.S, P_in.PF, wl, r_edf, splices, NA);       % реальные входные мощности сигнала и накачки
                                                                                 %с учетом потерь на сварках и WDM
-P_in.ASEF = ase_in(wl,ph_const, sigma,P_in.PF, w_edf);
+P_in.ASEF = ase_in(wl, ph_const, sigma, P_in.PF, w_edf);
 
 %% решение сиситемы ОДУ
     tStart = cputime;                                                           % старт таймера
@@ -64,15 +67,15 @@ P_in.ASEF = ase_in(wl,ph_const, sigma,P_in.PF, w_edf);
 % решение подробной системы уравнений (общий случай)
             [z, P_out]     = ode45(@(z,P) odu2(z, P, wl, sigma, psi, N, n_sum, ph_const, P_in, r_edf), [0: 0.1: L],[undbm(P_in.S) undbm(P_in.ASEF) undbm(P_in.PF)]);
         end
-        G                  = Gain(P_out(size(P_out,1), 1 : N.S)', P_in.S);      % расчет КУ
-        nf                 = NF(P_out(size(P_out,1), N.S + 1 : N.S + N.ASE),... % расчет ШФ
+        G                  = Gain(P_out(size(P_out,1), 1: N.S)', P_in.S);      % расчет КУ
+        nf                 = NF(P_out(size(P_out,1), N.S+1: N.S+N.ASE),...     % расчет ШФ
             G, wl, ph_const);                                                    
     else
 % случай встречной накачки или комбинированный случай
         P_in.ASEB = ase_in(wl,ph_const, sigma,P_in.PB, w_edf);
         P_out              = chord_method(L, wl, sigma, psi, N, w_edf, n_sum, P_in, low_gain_regime, ph_const, r_edf);
-        G                  = Gain(P_out(size(P_out,1), 1 : N.S)', P_in.S);      % расчет КУ
-        nf                 = NF(P_out(size(P_out,1), N.S + 1 : N.S + N.ASE),... % расчет ШФ
+        G                  = Gain(P_out(size(P_out,1), 1: N.S)', P_in.S);      % расчет КУ
+        nf                 = NF(P_out(size(P_out,1), N.S+1 : N.S+N.ASE),...    % расчет ШФ
             G, wl, ph_const);                                                   
     end
     P_out                  = P_out / undb(splices.fiber) / undb(splices.wdm_s); % реальные входные мощности сигнала и накачки

@@ -18,7 +18,7 @@ epsilon = 1e-6;
         ksi1(1,:)           = zeros(1, N.ASE);            % начальные условия для задачи Коши (ASE,правая часть итерации)
         ksi2(1,:)           = ones(1, N.ASE) * 10^(-9);   % начальные условия для задачи Коши (ASE,левая часть итерации)
         lamda1(1,:)         = zeros(1, N.PB);             % начальные условия для задачи Коши (P_p_backward,правая часть итерации)
-        lamda2(1,:)         = ones(1, N.PB) * 0.0005;       % начальные условия для задачи Коши (P_p_backward,левая часть итерации)
+        lamda2(1,:)         = ones(1, N.PB) * 0.0005;     % начальные условия для задачи Коши (P_p_backward,левая часть итерации)
         lamda               = ones(1, N.PB) * 1;
 %% цикл для поиска недостающего условия для задачи Коши
      while abs(sum(lamda1) - sum(lamda)) > epsilon
@@ -38,10 +38,10 @@ epsilon = 1e-6;
          end
         
         % расчет значений встречной накачки и встречного ASE в конце линии
-        P_ASEB1     = P_out1(size(P_out1,1), N.S + N.ASE + N.PF + 1 : N.S + N.ASE + N.PF + N.ASE);                           % полученное значение ASE в конце волокна, 1
-        P_ASEB2     = P_out2(size(P_out2,1), N.S + N.ASE + N.PF + 1 : N.S + N.ASE + N.PF + N.ASE);                           % полученное значение ASE в конце волокна, 2
-        P_PB1       = P_out1(size(P_out1,1), N.S + 2 * N.ASE + N.PF + 1 : N.S + N.ASE + N.PF + N.ASE + N.PB);                % полученное значение P_p_backward в конце волокна, 1
-        P_PB2       = P_out2(size(P_out2,1), N.S + 2 * N.ASE + N.PF + 1 : N.S + N.ASE + N.PF + N.ASE + N.PB);                % полученное значение P_p_backward в конце волокна, 2
+        P_ASEB1     = P_out1(size(P_out1,1), N.S+N.ASE+N.PF+1: N.S+N.ASE+N.PF+N.ASE);                       % полученное значение ASE в конце волокна, 1
+        P_ASEB2     = P_out2(size(P_out2,1), N.S+N.ASE+N.PF+1: N.S+N.ASE+N.PF+N.ASE);                       % полученное значение ASE в конце волокна, 2
+        P_PB1       = P_out1(size(P_out1,1), N.S+2*N.ASE+N.PF+1: N.S+N.ASE+N.PF+N.ASE+N.PB);                % полученное значение P_p_backward в конце волокна, 1
+        P_PB2       = P_out2(size(P_out2,1), N.S+2*N.ASE+N.PF+1: N.S+N.ASE+N.PF+N.ASE+N.PB);                % полученное значение P_p_backward в конце волокна, 2
         
         % приближенное недостающее условие для задачи Коши
         ksi         = ksi1 + (ksi2 - ksi1) .* (undbm(P_in.ASEB) - P_ASEB1) ./ (P_ASEB2 - P_ASEB1);

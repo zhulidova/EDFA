@@ -27,7 +27,7 @@ p.PF                = P(N.S+N.ASE+1:N.S+N.ASE+N.PF,1) ./ P_sat.PF';             
 overlap.sum_ES      = sum(p.S' .* sigma.ES ./ (sigma.AS + sigma.ES)) +...       % слагаемое с усилением для сигнала и ASE
     sum(p.ASEF' .* sigma.EASE ./ (sigma.AASE + sigma.EASE));
 overlap.sum_all     = sum(p.S) + sum(p.ASEF) + sum(p.PF);                       % сумма всех приведенных мощностей
-overlap.sum_EP      = sum(p.PF' .* sigma.EPF ./ (sigma.APF + sigma.EPF));      % слагаемое с усилением для накачки
+overlap.sum_EP      = sum(p.PF' .* sigma.EPF ./ (sigma.APF + sigma.EPF));       % слагаемое с усилением для накачки
 overlap.sum_AP      = sum(p.PF' .* sigma.APF ./ (sigma.APF + sigma.EPF));       % слагаемое с поглощением для накачки
 
 if isempty(P_in.PB) == 0
@@ -43,9 +43,9 @@ if isempty(P_in.PB) == 0
     overlap.sum_all = overlap.sum_all + sum(p.ASEB) + sum(p.PB);                % сумма всех приведенных мощностей
 end
 
-overlap.ES      = overlap.sum_AP ./ overlap.sum_all.^2 .* (overlap.sum_all...  % интеграл перекрытия (усиление) для сигнала
+overlap.ES      = overlap.sum_AP ./ overlap.sum_all.^2 .* (overlap.sum_all...   % интеграл перекрытия (усиление) для сигнала
     .* (1 - exp(-(10^(-5) ./ w_edf.S).^2)));
-overlap.AS      = (overlap.sum_ES + overlap.sum_EP) ./ overlap.sum_all.^2 .*...% интеграл перекрытия (поглощение) для сигнала
+overlap.AS      = (overlap.sum_ES + overlap.sum_EP) ./ overlap.sum_all.^2 .*... % интеграл перекрытия (поглощение) для сигнала
     (overlap.sum_all .* (1 - exp(-(10^(-5) ./ w_edf.S).^2)));
 overlap.EASE    = overlap.sum_AP ./ overlap.sum_all.^2 .* (overlap.sum_all .*...% интеграл перекрытия (усиление) для ASE
     (1 - exp(-(10^(-5) ./ w_edf.ASE).^2)));
