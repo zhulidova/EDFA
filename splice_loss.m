@@ -26,6 +26,6 @@ w_s_edf  =  r_edf .* (0.65 + (1.619 ./ V_s_edf.^1.5) + (2.879 ./ V_s_edf.^6));
 %  w_s_smf).^2)); 
 
 % Итоговые реальные мощности на входе в активное волокно
-P_s  = P_s - splices.fiber;           % реальная мощность сигнала
+P_s  = P_s - splices.fiber - splices.wdm_s;           % реальная мощность сигнала
 P_p  = P_p - splices.wdm_p - splices.fiber;           % реальная мощность накачки
 end

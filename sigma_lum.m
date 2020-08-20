@@ -12,7 +12,7 @@ function sigma = sigma_lum(T, wl, ph_const)
 %и поглощения (sigma.AS, sigma.APF, sigma.AASE, sigma.APB)
 
 param         = sigma_lum_param();                                                      % чтение массива экспериментальных параметров
-CrossLum      = 1.32 * param(:,3) .* exp((-1) * 10^(-21) * param(:,2) / ph_const.k / T); % расчет сечения люминесценции
+CrossLum      = 2.07 * param(:,3) .* exp((-1) * 10^(-21) * param(:,2) / ph_const.k / T); % расчет сечения люминесценции
 
 % сглаживание
 wl_smooth     = linspace(min(param(:,1)), max(param(:,1)), 100);                        % новая сетка (80 точек длин волн)

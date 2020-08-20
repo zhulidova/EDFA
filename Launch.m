@@ -41,10 +41,10 @@ P_in.PB                = [];                                                    
 % параметры активного волокна и системы
 r_edf                  = 2.9E-6 / 2;                                                       % радиус сердцевины, м
 NA                     = 0.26;                                                             % числовая апертура активного волокна
-n                      = 140;                                                              % концентрация ионов эрбия, ppm
+n                      = 90;                                                              % концентрация ионов эрбия, ppm
 L                      = 9;                                                                % длина активного волокна, м
-T_c                    = 0;                                                              % температура среды, °С
-splices.wdm_p          = 0.15;                                                             % потери на wdm для накачки (datasheet), дБм                         
+T_c                    = 100;                                                              % температура среды, °С
+splices.wdm_p          = 2.05;                                                             % потери на wdm для накачки (datasheet), дБм                         
 splices.wdm_s          = 0.2;                                                              % потери на wdm для чигнала (datasheet), дБм                  
 splices.fiber          = 0.5;                                                              % потери на сварке
 low_gain_regime        = 0;                                                                % механический выбор режима слабого сигнала
@@ -63,10 +63,10 @@ EXP                    = exp_res(P_s_sum, T_c, dbm(sum(undbm(P_in.PF))));
 delta_G = G - EXP(2,:);
 delta_nf = nf - EXP(3,:);
 %% оформление графиков
-create_graf(wl_smooth.Model, G_smooth.Model, "model", 'Gain', P_s_sum, 1, 1); 
+create_graf(wl_smooth.Model, G_smooth.Model, "model", 'Gain', P_s_sum, P_in, 1, 1); 
 hold on;
-create_graf(wl_smooth.Exp, G_smooth.Exp, "exp", 'Gain', P_s_sum, 1, 1); 
+create_graf(wl_smooth.Exp, G_smooth.Exp, "exp", 'Gain', P_s_sum, P_in, 1, 1); 
 hold on;
-create_graf(wl_smooth.Model, nf_smooth.Model, "model", 'NF', P_s_sum, 2, 1); 
+create_graf(wl_smooth.Model, nf_smooth.Model, "model", 'NF', P_s_sum, P_in, 2, 1); 
 hold on;
-create_graf(wl_smooth.Exp, nf_smooth.Exp, "exp", 'NF', P_s_sum, 2, 1); 
+create_graf(wl_smooth.Exp, nf_smooth.Exp, "exp", 'NF', P_s_sum, P_in, 2, 1); 

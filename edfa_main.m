@@ -78,7 +78,7 @@ P_in.ASEF = ase_in(wl, ph_const, sigma, P_in.PF, w_edf);
         nf                 = NF(P_out(size(P_out,1), N.S+1 : N.S+N.ASE),...    % расчет ШФ
             G, wl, ph_const);                                                   
     end
-    P_out                  = P_out / undb(splices.fiber) / undb(splices.wdm_s); % реальные входные мощности сигнала и накачки
+    P_out                  = P_out / undb(splices.fiber); % реальные входные мощности сигнала и накачки
     time                   = cputime - tStart;                                  % конец таймера
     formatSpec             = 'Система ОДУ решена за %f секунд\n';                           
     fprintf(formatSpec,time)
