@@ -12,7 +12,7 @@ function sigma = sigma_lum(T, wl, ph_const)
 %и поглощения (sigma.AS, sigma.APF, sigma.AASE, sigma.APB)
 
 param         = sigma_lum_param();                                                      % чтение массива экспериментальных параметров
-CrossLum      = 2.07 * param(:,3) .* exp((-1) * 10^(-21) * param(:,2) / ph_const.k / T); % расчет сечения люминесценции
+CrossLum      = 2.5 * param(:,3) .* exp((-1) * 10^(-21) * param(:,2) / ph_const.k / T); % расчет сечения люминесценции
 
 % сглаживание
 wl_smooth     = linspace(min(param(:,1)), max(param(:,1)), 100);                        % новая сетка (80 точек длин волн)
@@ -22,10 +22,10 @@ avgCrossLum   = spline(param(:,1), CrossLum, wl_smooth);                        
 CrossAbs      = avgCrossLum .* exp((-1) * (ph_const.eV * 0.809 - ph_const.h * ph_const.c * 10^9 ./ wl_smooth) / (ph_const.k * T));
 wl_smooth2    = linspace(min(param(:,1)), max(param(:,1)), 100);
 avgCrossAbs   = spline(wl_smooth, CrossAbs, wl_smooth2);                               % сглаженный спектр сечения       
-% 
-% plot(wl_smooth*0.1,avgCrossLum);
+
+% plot(wl_smooth,avgCrossLum);
 % hold on;
-% plot(wl_smooth2*0.1,avgCrossAbs);
+% plot(wl_smooth2,avgCrossAbs);
 
 sigma.ES     = interp1(wl_smooth, avgCrossLum, wl.S);       % сечение люминесценции (сигнал)  
 sigma.AS     = interp1(wl_smooth2, avgCrossAbs, wl.S);      % сечение поглощения (сигнал)
