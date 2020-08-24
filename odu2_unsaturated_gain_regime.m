@@ -1,4 +1,4 @@
-function f = odu2_unsaturated_gain_regime(z, P, wl, sigma, N,w_edf, n_sum, ph_const, P_in)
+function f = odu2_unsaturated_gain_regime(z, P, Lambda, sigma, N,w_edf, n_sum, ph_const, P_in)
 %% упрощенная система ОДУ (режим слабого сигнала)
 % расчет интегралов при замене волновых функций интенсивности экспонентами (вывод -
 %отчеты по модели EDFA/Жулидова. Отчет от 02.06)
@@ -12,75 +12,75 @@ function f = odu2_unsaturated_gain_regime(z, P, wl, sigma, N,w_edf, n_sum, ph_co
 % alpha   - структура коэффицентов истощения попутной (alpha.PF) и встречной (alpha.PB) накачек
 % f       - значение производных в скоростных уравнениях
 
-P_sat.S             = (ph_const.h * ph_const.c * 10^34 * pi .* w_edf.S.^2)...   % мощность насыщения (сигнал)
-    ./ (wl.S .* (sigma.AS + sigma.ES) * ph_const.tau);
-P_sat.PF            = (ph_const.h * ph_const.c * 10^34 * pi .* w_edf.PF.^2)...  % мощность насыщения (попутная накачка)
-    ./ (wl.PF .* (sigma.APF + sigma.EPF) * ph_const.tau);                                   
-P_sat.PB            = (ph_const.h * ph_const.c * 10^34 * pi .* w_edf.PB.^2)...  % мощность насыщения (встречная накачка)
-    ./ (wl.PB .* (sigma.APB + sigma.EPB) * ph_const.tau);                                   
-P_sat.ASE           = (ph_const.h * ph_const.c * 10^34 * pi .* w_edf.ASE.^2)... % мощность насыщения (ASE)
-    ./ (wl.ASE .* (sigma.AASE + sigma.EASE) * ph_const.tau);
+P_sat.s             = (ph_const.h * ph_const.c * 10^25 * pi .* w_edf.s.^2)...   % мощность насыщения (сигнал)
+    ./ (Lambda.s .* (sigma.as + sigma.es) * ph_const.tau);
+P_sat.pf            = (ph_const.h * ph_const.c * 10^25 * pi .* w_edf.pf.^2)...  % мощность насыщения (попутная накачка)
+    ./ (Lambda.pf .* (sigma.apf + sigma.epf) * ph_const.tau);                                   
+P_sat.pb            = (ph_const.h * ph_const.c * 10^25 * pi .* w_edf.pb.^2)...  % мощность насыщения (встречная накачка)
+    ./ (Lambda.pb .* (sigma.apb + sigma.epb) * ph_const.tau);                                   
+P_sat.ase           = (ph_const.h * ph_const.c * 10^25 * pi .* w_edf.ase.^2)... % мощность насыщения (ASE)
+    ./ (Lambda.ase .* (sigma.aase + sigma.ease) * ph_const.tau);
 
-p.S                 = P(1: N.S, 1) ./ P_sat.S';                                 % приведенная мощность сигнала
-p.ASEF              = P(N.S+1:N.S+N.ASE, 1) ./ P_sat.ASE';                      % приведенная мощность попутного ASE
-p.PF                = P(N.S+N.ASE+1:N.S+N.ASE+N.PF,1) ./ P_sat.PF';             % приведенная мощность попутной накачки
-overlap.sum_ES      = sum(p.S' .* sigma.ES ./ (sigma.AS + sigma.ES)) +...       % слагаемое с усилением для сигнала и ASE
-    sum(p.ASEF' .* sigma.EASE ./ (sigma.AASE + sigma.EASE));
-overlap.sum_all     = sum(p.S) + sum(p.ASEF) + sum(p.PF);                       % сумма всех приведенных мощностей
-overlap.sum_EP      = sum(p.PF' .* sigma.EPF ./ (sigma.APF + sigma.EPF));       % слагаемое с усилением для накачки
-overlap.sum_AP      = sum(p.PF' .* sigma.APF ./ (sigma.APF + sigma.EPF));       % слагаемое с поглощением для накачки
+p.s                 = P(1: N.s, 1) ./ P_sat.s';                                 % приведенная мощность сигнала
+p.asef              = P(N.s+1:N.s+N.ase, 1) ./ P_sat.ase';                      % приведенная мощность попутного ASE
+p.pf                = P(N.s+N.ase+1:N.s+N.ase+N.pf,1) ./ P_sat.pf';             % приведенная мощность попутной накачки
+overlap.sum_es      = sum(p.s' .* sigma.es ./ (sigma.as + sigma.es)) +...       % слагаемое с усилением для сигнала и ASE
+    sum(p.asef' .* sigma.ease ./ (sigma.aase + sigma.ease));
+overlap.sum_all     = sum(p.s) + sum(p.asef) + sum(p.pf);                       % сумма всех приведенных мощностей
+overlap.sum_ep      = sum(p.pf' .* sigma.epf ./ (sigma.apf + sigma.epf));       % слагаемое с усилением для накачки
+overlap.sum_ap      = sum(p.pf' .* sigma.apf ./ (sigma.apf + sigma.epf));       % слагаемое с поглощением для накачки
 
-if isempty(P_in.PB) == 0
-    p.ASEB          = P(N.S+N.ASE+N.PF+1:N.S+N.ASE+N.PF+N.ASE) ./ P_sat.ASE';   % приведенная мощность попутного ASE
-    p.PB            = P(N.S+N.ASE+N.PF+N.ASE+1:N.S+N.ASE+N.PF+N.ASE+N.PB) ...   % приведенная мощность встречной накачки
-        ./ P_sat.PB';
-    overlap.sum_ES  = overlap.sum_ES + sum(p.ASEB' .* sigma.EASE...             % слагаемое с усилением для сигнала и ASE
-        ./ (sigma.AASE + sigma.EASE));
-    overlap.sum_EP  = overlap.sum_EP + sum(p.PB' .* sigma.EPB ./ ...            % слагаемое с усилением для накачки
-        (sigma.APB + sigma.EPB));
-    overlap.sum_AP  = overlap.sum_AP + sum(p.PB' .* sigma.APB ./ ...            % слагаемое с поглощением для накачки
-        (sigma.APB + sigma.EPB));
-    overlap.sum_all = overlap.sum_all + sum(p.ASEB) + sum(p.PB);                % сумма всех приведенных мощностей
+if isempty(P_in.pb) == 0
+    p.aseb          = P(N.s+N.ase+N.pf+1:N.s+2*N.ase+N.pf) ./ P_sat.ase';   % приведенная мощность попутного ASE
+    p.pb            = P(N.s+2*N.ase+N.pf+1:N.s+2*N.ase+N.pf+N.pb) ...   % приведенная мощность встречной накачки
+        ./ P_sat.pb';
+    overlap.sum_es  = overlap.sum_es + sum(p.aseb' .* sigma.ease...             % слагаемое с усилением для сигнала и ASE
+        ./ (sigma.aase + sigma.ease));
+    overlap.sum_ep  = overlap.sum_ep + sum(p.pb' .* sigma.epb ./ ...            % слагаемое с усилением для накачки
+        (sigma.apb + sigma.epb));
+    overlap.sum_ap  = overlap.sum_ap + sum(p.pb' .* sigma.apb ./ ...            % слагаемое с поглощением для накачки
+        (sigma.apb + sigma.epb));
+    overlap.sum_all = overlap.sum_all + sum(p.aseb) + sum(p.pb);                % сумма всех приведенных мощностей
 end
 
-overlap.ES      = overlap.sum_AP ./ overlap.sum_all.^2 .* (overlap.sum_all...   % интеграл перекрытия (усиление) для сигнала
-    .* (1 - exp(-(10^(-5) ./ w_edf.S).^2)));
-overlap.AS      = (overlap.sum_ES + overlap.sum_EP) ./ overlap.sum_all.^2 .*... % интеграл перекрытия (поглощение) для сигнала
-    (overlap.sum_all .* (1 - exp(-(10^(-5) ./ w_edf.S).^2)));
-overlap.EASE    = overlap.sum_AP ./ overlap.sum_all.^2 .* (overlap.sum_all .*...% интеграл перекрытия (усиление) для ASE
-    (1 - exp(-(10^(-5) ./ w_edf.ASE).^2)));
-overlap.AASE    = (overlap.sum_ES + overlap.sum_EP) ./ overlap.sum_all.^2 .*... % интеграл перекрытия (поглощение) для ASE
-    (overlap.sum_all .* (1 - exp(-(10^(-5) ./ w_edf.ASE).^2)));
+overlap.es      = overlap.sum_ap ./ overlap.sum_all.^2 .* (overlap.sum_all...   % интеграл перекрытия (усиление) для сигнала
+    .* (1 - exp(-(10^(-5) ./ w_edf.s).^2)));
+overlap.as      = (overlap.sum_es + overlap.sum_ep) ./ overlap.sum_all.^2 .*... % интеграл перекрытия (поглощение) для сигнала
+    (overlap.sum_all .* (1 - exp(-(10^(-5) ./ w_edf.s).^2)));
+overlap.ease    = overlap.sum_ap ./ overlap.sum_all.^2 .* (overlap.sum_all .*...% интеграл перекрытия (усиление) для ASE
+    (1 - exp(-(10^(-5) ./ w_edf.ase).^2)));
+overlap.aase    = (overlap.sum_es + overlap.sum_ep) ./ overlap.sum_all.^2 .*... % интеграл перекрытия (поглощение) для ASE
+    (overlap.sum_all .* (1 - exp(-(10^(-5) ./ w_edf.ase).^2)));
 
-g.ES            = n_sum .* sigma.ES .* overlap.ES;                              % диф. коэффициент усиления (сигнал)
-g.AS            = n_sum .* sigma.AS .* overlap.AS;                              % диф. коэффициент поглощения (сигнал)
-g.EASE          = n_sum .* sigma.EASE .* overlap.EASE;                          % диф. коэффициент усиления (ASE)
-g.AASE          = n_sum .* sigma.AASE .* overlap.AASE;                          % диф. коэффициент поглощения (ASE)
+g.es            = n_sum .* sigma.es .* overlap.es;                              % диф. коэффициент усиления (сигнал)
+g.as            = n_sum .* sigma.as .* overlap.as;                              % диф. коэффициент поглощения (сигнал)
+g.ease          = n_sum .* sigma.ease .* overlap.ease;                          % диф. коэффициент усиления (ASE)
+g.aase          = n_sum .* sigma.aase .* overlap.aase;                          % диф. коэффициент поглощения (ASE)
 
-alpha.PF        = (1 - exp(-(10^(-5) ./ w_edf.PF).^2)) * n_sum .* sigma.APF;    % коэффициент истощения попутной накачки
-alpha.PB        = (1 - exp(-(10^(-5) ./ w_edf.PB).^2)) * n_sum .* sigma.APB;    % коэффицент истощения встречной накачки
+alpha.pf        = (1 - exp(-(10^(-5) ./ w_edf.pf).^2)) * n_sum .* sigma.apf;    % коэффициент истощения попутной накачки
+alpha.pb        = (1 - exp(-(10^(-5) ./ w_edf.pb).^2)) * n_sum .* sigma.apb;    % коэффицент истощения встречной накачки
 
 % итоговые значения дифференциалов
 
 %уравнения для сигнала (dP_s/dz)
-f(1:N.S,1)  = (g.ES - g.AS)' .* P(1: N.S, 1);
+f(1:N.s,1)  = (g.es - g.as)' .* P(1: N.s, 1);
 
 % уравнения для попутного ASE (dP_ase/dz)
-f(N.S+1:N.S+N.ASE,1)  = (g.EASE - g.AASE)' .* P(N.S+1:N.S+N.ASE, 1) + 2 * ph_const.h * ph_const.c^2 * 0.1 *...
-    10^18 ./ wl.ASE'.^3 .* g.EASE';
+f(N.s+1:N.s+N.ase,1)  = (g.ease - g.aase)' .* P(N.s+1:N.s+N.ase, 1) + 2 * ph_const.h * ph_const.c^2 * 0.1 *...
+    10^(-9) ./ Lambda.ase'.^3 .* g.ease';
 
 % уравнения для попутной накачки (dP_p/dz)
-f(N.S+N.ASE+1:N.S+N.ASE+N.PF,1)  = -alpha.PF' ./ (1 + sum(p.PF)) .* P(N.S+N.ASE+1:N.S+N.ASE+N.PF,1);
+f(N.s+N.ase+1:N.s+N.ase+N.pf,1)  = -alpha.pf' ./ (1 + sum(p.pf)) .* P(N.s+N.ase+1:N.s+N.ase+N.pf,1);
 
 % допольнительные уравнения при встречной накачке
-if isempty(P_in.PB) == 0
+if isempty(P_in.pb) == 0
     % уравнения для встречного ASE (dP_ase/dz)
-    f(N.S+N.ASE+N.PF+1:N.S+N.ASE+N.PF+N.ASE,1)  = (-1) .* (g.EASE - g.AASE)' .*...
-        P(N.S+N.ASE+N.PF+1: N.S+N.ASE+N.PF+N.ASE, 1) - 2 * ph_const.h * ph_const.c^2 * 0.1 * 10^18 ./ wl.ASE'.^3 ...
-        .* g.EASE';
+    f(N.s+N.ase+N.pf+1:N.s+2*N.ase+N.pf,1)  = (-1) .* (g.ease - g.aase)' .*...
+        P(N.s+N.ase+N.pf+1: N.s+2*N.ase+N.pf, 1) - 2 * ph_const.h * ph_const.c^2 * 0.1 * 10^(-9) ./ Lambda.ase'.^3 ...
+        .* g.ease';
     
     % уравнение для встречной накачки (dP_p/dz)
-    f(N.S+N.ASE+N.PF+N.ASE+1:N.S+N.ASE+N.PF+N.ASE+N.PB,1)  = alpha.PB' ./ (1 + sum(p.PB)) .*...
-        P(N.S+N.ASE+N.PF+N.ASE+1: N.S+N.ASE+N.PF+N.ASE+N.PB, 1);   
+    f(N.s+2*N.ase+N.pf+1:N.s+2*N.ase+N.pf+N.pb,1)  = alpha.pb' ./ (1 + sum(p.pb)) .*...
+        P(N.s+2*N.ase+N.pf+1: N.s+2*N.ase+N.pf+N.pb, 1);   
 end
 end

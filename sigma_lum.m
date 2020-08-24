@@ -1,6 +1,6 @@
 %% функция расчета сечения люминесценции и поглощения(Т)
 % выбирает из спектра сечений значения на длинах волн сигнала
-function sigma = sigma_lum(T, wl, ph_const)
+function sigma = sigma_lum(T, Lambda, ph_const)
 % Переменные
 % param        - массив экспериментальных значений сечений (param(:,1) - длина волны, param(:,2)
 %- экспериментальные постоянные)
@@ -12,7 +12,7 @@ function sigma = sigma_lum(T, wl, ph_const)
 %и поглощения (sigma.AS, sigma.APF, sigma.AASE, sigma.APB)
 
 param         = sigma_lum_param();                                                      % чтение массива экспериментальных параметров
-CrossLum      = 2.5 * param(:,3) .* exp((-1) * 10^(-21) * param(:,2) / ph_const.k / T); % расчет сечения люминесценции
+CrossLum      = 2.45 * param(:,3) .* exp((-1) * 10^(-21) * param(:,2) / ph_const.k / T); % расчет сечения люминесценции
 
 % сглаживание
 wl_smooth     = linspace(min(param(:,1)), max(param(:,1)), 100);                        % новая сетка (80 точек длин волн)
@@ -27,13 +27,13 @@ avgCrossAbs   = spline(wl_smooth, CrossAbs, wl_smooth2);                        
 % hold on;
 % plot(wl_smooth2,avgCrossAbs);
 
-sigma.ES     = interp1(wl_smooth, avgCrossLum, wl.S);       % сечение люминесценции (сигнал)  
-sigma.AS     = interp1(wl_smooth2, avgCrossAbs, wl.S);      % сечение поглощения (сигнал)
-sigma.EPF    = interp1(wl_smooth, avgCrossLum, wl.PF);      % сечение люминесценции (попутная накачка)
-sigma.APF    = interp1(wl_smooth2, avgCrossAbs, wl.PF);     % сечение поглощения (попутная накачка)
-sigma.EASE   = interp1(wl_smooth, avgCrossLum, wl.ASE);     % сечение люминесценции (ASE)
-sigma.AASE   = interp1(wl_smooth2, avgCrossAbs, wl.ASE);    % сечение поглощения (ASE)
-sigma.EPB    = interp1(wl_smooth, avgCrossLum, wl.PB);      % сечение люминесценции (встречная накачка)
-sigma.APB    = interp1(wl_smooth2, avgCrossAbs, wl.PB);     % сечение поглощения (встречная накачка)
+sigma.es     = interp1(wl_smooth, avgCrossLum, Lambda.s * 10^(9));       % сечение люминесценции (сигнал)  
+sigma.as     = interp1(wl_smooth2, avgCrossAbs, Lambda.s * 10^(9));      % сечение поглощения (сигнал)
+sigma.epf    = interp1(wl_smooth, avgCrossLum, Lambda.pf * 10^(9));      % сечение люминесценции (попутная накачка)
+sigma.apf    = interp1(wl_smooth2, avgCrossAbs, Lambda.pf * 10^(9));     % сечение поглощения (попутная накачка)
+sigma.ease   = interp1(wl_smooth, avgCrossLum, Lambda.ase * 10^(9));     % сечение люминесценции (ASE)
+sigma.aase   = interp1(wl_smooth2, avgCrossAbs, Lambda.ase * 10^(9));    % сечение поглощения (ASE)
+sigma.epb    = interp1(wl_smooth, avgCrossLum, Lambda.pb * 10^(9));      % сечение люминесценции (встречная накачка)
+sigma.apb    = interp1(wl_smooth2, avgCrossAbs, Lambda.pb * 10^(9));     % сечение поглощения (встречная накачка)
 
 end

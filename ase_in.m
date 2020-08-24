@@ -6,16 +6,21 @@
 % p_ase     - мощность ASE в ¬т
 % P_ase     - мощность ASE в дЅм
 
-function P_ase = ase_in(wl,ph_const, sigma,P_in, w_edf) 
+function P_ase = ase_in(Lambda, ph_const, sigma, PinP, w_edf) 
 
-P_sat_P   = (ph_const.h * ph_const.c * 10^34 * pi .* w_edf.PF.^2)...                  % мощность насыщени€ дл€ накачки
-    ./ (wl.PF .* (sigma.APF + sigma.EPF) * ph_const.tau);
-P_sat_ASE = (ph_const.h * ph_const.c * 10^34 * pi .* w_edf.ASE.^2)...                 % мощность насыщени€ дл€ ASE
-    ./ (wl.ASE .* (sigma.AASE + sigma.EASE) * ph_const.tau);
+P_sat_P   = (ph_const.h * ph_const.c * 10^25 * pi .* w_edf.pf.^2)...                  % мощность насыщени€ дл€ накачки
+    ./ (Lambda.pf .* (sigma.apf + sigma.epf) * ph_const.tau);
+P_sat_ASE = (ph_const.h * ph_const.c * 10^25 * pi .* w_edf.ase.^2)...                 % мощность насыщени€ дл€ ASE
+    ./ (Lambda.ase .* (sigma.aase + sigma.ease) * ph_const.tau);
 
-n_sp      = 1 ./ (1 - sum(sigma.EPF ./ sigma.APF) .* sigma.AASE  ./ sigma.EASE...     % коэффициент спонтанной люминесценции
-    - sum((1 + sigma.EPF./ sigma.APF) .* P_sat_P ./ P_in) .* sigma.AASE  ./ sigma.EASE);
+n_sp      = 1 ./ (1 - sum(sigma.epf ./ sigma.apf) .* sigma.aase  ./ sigma.ease...     % коэффициент спонтанной люминесценции
+    - sum((1 + sigma.epf./ sigma.apf) .* P_sat_P ./ PinP) .* sigma.aase  ./ sigma.ease);
 
-p_ase     = 4 * n_sp .* ph_const.c * 0.1 * 10^9 ./ wl.ASE.^2 .* P_sat_ASE * 10^(-16); % мощность ASE в ¬т
-P_ase     = dbm(p_ase);        % мощность ASE в дЅм
+if n_sp(1,1) < 0
+    n_sp      = 1 ./ (1 - sum(sigma.epf ./ sigma.apf) .* sigma.aase  ./ sigma.ease...     % коэффициент спонтанной люминесценции
+    - sum((1 + sigma.epf./ sigma.apf) .* P_sat_P ./ (3.5.*PinP)) .* sigma.aase  ./ sigma.ease);
+end
+    
+P_ase     = 4 * n_sp .* ph_const.c * 0.1 * 10^(-9) ./ Lambda.ase.^2 .* P_sat_ASE * 10^(-16); % мощность ASE в ¬т
+
 end
