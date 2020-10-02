@@ -1,9 +1,4 @@
-clear all; 
-%% основной файл с входными данными
-% wl.S            - массив длин волн сигнала, нм
-% wl.ASE          - массив длин волн ASE, нм
-% wl.PF           - массив длин волн попутной накачки, нм
-% wl.PB           - массив длин волн встречной накачки, нм
+clear all;
 % P_s_sum         - суммарна€ мощность сигнала, дЅм
 % P_in.S          - массив входных мощностей сигнала (суммарна€ мощность / кол-во длин волн), дЅм
 % P_in.PF         - массив мощностей попутной накачки в 0, дЅм
@@ -20,53 +15,48 @@ clear all;
 % ‘ункции
 % edfa_main       - основна€ расчетна€ функци€ EDFA
 % smooth_res      - сглаживание результатов
-% create_graf     - построение графиков  
+% create_graf     - построение графиков 
 
-P_s_sum = 2;    % массив суммарных входных мощностей сигнала
-                                
+P_s_sum = [-28];  % массив суммарных входных мощностей сигнала  
 % параметры сигнала 
-wl.S                   = [1529.4 1532.52 1537.24 1541.96 1547.56 1552.36 1556.36 1560.62]; % длины волн сигнала, нм
-P_in.S                 = dbm(undbm(P_s_sum) / length(wl.S)) * ones(1,length(wl.S));        % входные мощности сигнала, дЅм
+Lambda.s              = [1529.55 1532.70 1538.20 1543.80 1546.90 1551.70 1557.40 1560.60] * 10^(-9); % длины волн сигнала, нм
+Pin.s                 = watt(P_s_sum) / length(Lambda.s) * ones(1,length(Lambda.s));        % входные мощности сигнала, дЅм
 
 % параметры ASE 
-wl.ASE                 = [1528 : 0.1 : 1565];                                              % спектр ASE, нм
+Lambda_range          = [1528 1565] * 10^(-9);                           % спектр ASE, нм
 
 % параметры накачки
-wl.PF                  = [1473 1480];                                                      % длины волн попутной накачки, нм
-P_in.PF                = [13.85 15.89];                                                    % входные мощности попутной накачки, дЅм
-wl.PB                  = [1473 1480];                                                      % длины волн встречной накачки, нм
-% (пустой массив, если накачка только попутна€)
-P_in.PB                = [];                                                               % входные мощности встречной накачки, дЅм
+Lambda.pf             = [1473 1480] * 10^(-9);                           % длины волн попутной накачки, нм
+Pin.pf                = watt([3.85 5.89]);
 
-% параметры активного волокна и системы
-r_edf                  = 2.9E-6 / 2;                                                       % радиус сердцевины, м
-NA                     = 0.26;                                                             % числова€ апертура активного волокна
-n                      = 70;                                                               % концентраци€ ионов эрби€, ppm
-L                      = 9;                                                                % длина активного волокна, м
-T_c                    = 100;                                                              % температура среды, ∞—
-splices.wdm_p          = 2.35;                                                             % потери на wdm дл€ накачки (datasheet), дЅм                         
-splices.wdm_s          = 0.2;                                                              % потери на wdm дл€ сигнала (datasheet), дЅм                  
-splices.fiber          = 0.5;                                                              % потери на сварке
-low_gain_regime        = 0;                                                                % механический выбор режима слабого сигнала
-                                                                                           % 1 - режим слабого сигнала % 0 - общий случай
+Lambda.pb             = [] * 10^(-9);                                    % длины волн встречной накачки, нм
+                                                                         % (пустой массив, если накачка только попутна€)
+Pin.pb                = [];                                              % входные мощности встречной накачки, дЅм
+
+L    = 9;
+N0.r                  = 25;
+N0.ase                = 20;
+N0.z                  = 50;
+type                  = 'OFS980';
+
+T_c = 25;
+
 %% ќсновна€ расчетна€ функци€
-[G, nf, Pout]          = edfa_main(P_in, wl, n, low_gain_regime, L, T_c, r_edf, NA, splices);
-
+[z, P, Gain, OSNR, NF, SPase]   = edfa(Pin, Lambda, Lambda_range, L, N0, type);
 % сглаживание результатов моделировани€
-[wl_smooth.Model, G_smooth.Model, nf_smooth.Model] = smooth_res(wl.S, G, nf);   
+[wl_smooth.Model, G_smooth.Model, nf_smooth.Model] = smooth_res(Lambda.s', Gain, NF);   
 
 % чтение экспериментальных данных
-EXP                    = exp_res(P_s_sum, T_c, dbm(sum(undbm(P_in.PF))));
+EXP   = exp_res(P_s_sum, T_c, dbm(sum(Pin.pf)));
 
-[wl_smooth.Exp, G_smooth.Exp, nf_smooth.Exp]       = smooth_res(EXP(1,:), EXP(2,:), EXP(3,:));
+[wl_smooth.Exp, G_smooth.Exp, nf_smooth.Exp]  = smooth_res(EXP(1,:), EXP(2,:), EXP(3,:));
 
-delta_G  = G - EXP(2,:);
-delta_nf = nf - EXP(3,:);
 %% оформление графиков
-create_graf(wl_smooth.Model, G_smooth.Model, "model", 'Gain', P_s_sum, P_in, 1, 1); 
+create_graf(wl_smooth.Model*10^9, G_smooth.Model, "model", 'Gain', P_s_sum, Pin, 1, 1); 
 hold on;
-create_graf(wl_smooth.Exp, G_smooth.Exp, "exp", 'Gain', P_s_sum, P_in, 1, 1); 
+create_graf(wl_smooth.Exp, G_smooth.Exp, "exp", 'Gain', P_s_sum, Pin, 1, 1); 
 hold on;
-create_graf(wl_smooth.Model, nf_smooth.Model, "model", 'NF', P_s_sum, P_in, 2, 1); 
+create_graf(wl_smooth.Model*10^9, nf_smooth.Model, "model", 'NF', P_s_sum, Pin, 2, 1); 
 hold on;
-create_graf(wl_smooth.Exp, nf_smooth.Exp, "exp", 'NF', P_s_sum, P_in, 2, 1); 
+create_graf(wl_smooth.Exp, nf_smooth.Exp, "exp", 'NF', P_s_sum, Pin, 2, 1);
+hold on;

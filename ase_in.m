@@ -6,16 +6,28 @@
 % p_ase     - мощность ASE в ¬т
 % P_ase     - мощность ASE в дЅм
 
-function P_ase = ase_in(wl,ph_const, sigma,P_in, w_edf) 
+function P_ase = ase_in(Lambda, ph_const, sigma, Pin, n_sum, psi, N, r_edf, N0, L) 
+r  = 0 : r_edf / N0.r : r_edf;                                         % массив координат радиуса волокна
+N_r = size(r,2);
+if isempty(Pin.asef) == 0
+    Lambda.pf = Lambda.pb;
+    Pin.pf = Pin.pb;
+end
+Lambda.pb = [];
+Pin.pb = [];
+Pin.ases  = zeros(1,N.s);
+Pin.asef  = zeros(1,N.ase);
+[z, Pout] = ode45(@(z,P) odu2(z, P, Lambda, sigma, psi, N, n_sum, ph_const, r_edf, N0), [0: L/N0.z: L],[Pin.s Pin.asef Pin.pf]);
 
-P_sat_P   = (ph_const.h * ph_const.c * 10^34 * pi .* w_edf.PF.^2)...                  % мощность насыщени€ дл€ накачки
-    ./ (wl.PF .* (sigma.APF + sigma.EPF) * ph_const.tau);
-P_sat_ASE = (ph_const.h * ph_const.c * 10^34 * pi .* w_edf.ASE.^2)...                 % мощность насыщени€ дл€ ASE
-    ./ (wl.ASE .* (sigma.AASE + sigma.EASE) * ph_const.tau);
+    P.ase   = Pout(:, 1 + N.s: N.ase + N.s)';                      % –аспределение мощностей сигналов
+    for i = 1:size(P.ase,2)
+    Gain_z(:,i)  = P.ase(:,i) - Pin.asef'; 
+    [n1, n2] = population(Pout(i, :)', Lambda, sigma, psi, N, ph_const);
+    a(:,i) = 2 * pi * n_sum * trapz(r,(repmat(sigma.ease',1,N_r) .* repmat(n2,N.ase,1)).* repmat(P.ase(:,i),1,N_r) .* psi.nase .* repmat(r,N.ase,1),2);
+    d_n_eq(:,i) = a(:,i)./Gain_z(:,i);
+    end
+    n_eq = a(:,size(a,2)) ./ Gain_z(:,size(Gain_z,2));
 
-n_sp      = 1 ./ (1 - sum(sigma.EPF ./ sigma.APF) .* sigma.AASE  ./ sigma.EASE...     % коэффициент спонтанной люминесценции
-    - sum((1 + sigma.EPF./ sigma.APF) .* P_sat_P ./ P_in) .* sigma.AASE  ./ sigma.EASE);
+P_ase     = n_eq' .* ph_const.c * 0.1 * 10^(-9) ./ Lambda.ase.^3 .* ph_const.h * ph_const.c; % мощность ASE в ¬т
 
-p_ase     = 4 * n_sp .* ph_const.c * 0.1 * 10^9 ./ wl.ASE.^2 .* P_sat_ASE * 10^(-16); % мощность ASE в ¬т
-P_ase     = dbm(p_ase);        % мощность ASE в дЅм
 end

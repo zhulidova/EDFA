@@ -4,7 +4,7 @@
 % P_s_sum   - суммарна€ мощность сигнала
 % type("model" или "exp") - определ€ет тип линии
 % spec("Gain" или "NF")   - определ€ет тип кривой и делает назавание и подпись вертикальной оси
- function [] = create_graf(wl, x, type, spec, P_s_sum, P_in, num, count)
+ function [] = create_graf(Lambda, x, type, spec, P_s_sum, Pin, num, count)
 
 color_map              = ['r', 'b', 'm', 'c'];
 set(0, 'DefaultAxesFontSize', 14, 'DefaultAxesFontName', 'Times New Roman');
@@ -19,7 +19,7 @@ end
 
 figure(num);
 
-plot(wl, x, color_map(count), 'LineStyle', style, 'LineWidth', 2);                        
+plot(Lambda, x, color_map(count), 'LineStyle', style, 'LineWidth', 2);                        
 hold on;                   
 xlabel('ƒлина волны, нм'); 
 xlim([1529 1561]);
@@ -29,11 +29,11 @@ grid on;
 % составление легенды с суммарной мощностью сигнала и мощностью накачки
 formatLegendPowerS = sprintf("%.0f", P_s_sum);
 formatLegendPump = "";
-if isempty(P_in.PB) == 0
-    formatLegendPowerPB = sprintf("%.0f", round(dbm(sum(undbm(P_in.PB)))));
+if isempty(Pin.pb) == 0
+    formatLegendPowerPB = sprintf("%.0f", round(dbm(sum(Pin.pb))));
     formatLegendPump = ", P_{н}^{встр}= " + formatLegendPowerPB + " дЅм ";
 end
-    formatLegendPowerPF = sprintf("%.0f", round(dbm(sum(undbm(P_in.PF)))));
+    formatLegendPowerPF = sprintf("%.0f", round(dbm(sum(Pin.pf))));
     formatLegendPump = formatLegendPump + ", P_{н}^{попут}= " + formatLegendPowerPF + " дЅм ";
 formatLegend1     = "P_{с}^{вх}= ";
 formatLegend2     = " дЅм";

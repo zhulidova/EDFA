@@ -1,20 +1,20 @@
 %% Функция расчета реальной входной мощности сигнала и накачки с учетом потерь на сварках и WDM
-function [P_s, P_p] = splice_loss(P_s, P_p, wl, r_edf, splices, NA_edf)
+function [P_s, P_p] = splice_loss(P_s, P_p, Lambda, r_edf, splices, NA_edf)
     
 
 % Параметры волокна SMF-28E
 r_smf   = 8.20E-6/2;                                 % радиус серцевины
 NA_smf  = 0.14;                                      % числовая апертура
-V_p_smf = 2 * pi * r_smf * NA_smf * 10^9 ./ wl.PF;   % нормированная частота (накачка)
-V_s_smf = 2 * pi * r_smf * NA_smf * 10^9 ./ wl.S;    % нормированная частота (сигнал)
+V_p_smf = 2 * pi * r_smf * NA_smf ./ Lambda.pf;   % нормированная частота (накачка)
+V_s_smf = 2 * pi * r_smf * NA_smf ./ Lambda.s;    % нормированная частота (сигнал)
  
 % модовые радиусы SMF-28E
 w_p_smf = r_smf .* (0.65 + (1.619 ./ V_p_smf.^1.5) + (2.879 ./ V_p_smf.^6)); 
 w_s_smf = r_smf .* (0.65 + (1.619 ./ V_s_smf.^1.5) + (2.879 ./ V_s_smf.^6)); 
  
 % Параметры активного волокна
-V_p_edf  =  2 * pi * r_edf * NA_edf * 10^9 ./ wl.PF; % нормированная частота (накачка)
-V_s_edf  =  2 * pi * r_edf * NA_edf * 10^9 ./ wl.S;  % нормированная частота (сигнал)
+V_p_edf  =  2 * pi * r_edf * NA_edf ./ Lambda.pf; % нормированная частота (накачка)
+V_s_edf  =  2 * pi * r_edf * NA_edf ./ Lambda.s;  % нормированная частота (сигнал)
  
 % модовые радиусы активного волокна
 w_p_edf  =  r_edf .* (0.65 + (1.619 ./ V_p_edf.^1.5) + (2.879 ./ V_p_edf.^6));
@@ -26,6 +26,6 @@ w_s_edf  =  r_edf .* (0.65 + (1.619 ./ V_s_edf.^1.5) + (2.879 ./ V_s_edf.^6));
 %  w_s_smf).^2)); 
 
 % Итоговые реальные мощности на входе в активное волокно
-P_s  = P_s - splices.fiber - splices.wdm_s;           % реальная мощность сигнала
-P_p  = P_p - splices.wdm_p - splices.fiber;           % реальная мощность накачки
+P_s  = watt(P_s - splices.fiber - splices.wdm_s);           % реальная мощность сигнала
+P_p  = watt(P_p - splices.wdm_p - splices.fiber);           % реальная мощность накачки
 end
