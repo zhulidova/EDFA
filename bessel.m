@@ -2,10 +2,9 @@
 % зависимости от радиуса волокна для каждой длины волны
 function [psi, w_edf] = bessel(r_edf, Lambda, N, NA_edf, N0)
 % Переменные
-% V_edf         - структура нормированных частот для сигнала (V_edf.S), накачки (V_edf.PF и
-%V_edf.PB) и ASE (V_edf.ASE)
+% V_edf - структура нормированных частот для сигнала (V_edf.s), накачки (V_edf.pf и V_edf.pb) и ASE (V_edf.ase)
 % U_edf и W_edf - структура параметров для фукций Бесселя в зависимости от длины волны
-% w_edf         - структура модовых площадей для сигнала (w_edf.S), накачки (w_edf.PF и w_edf.PB) и ASE (w_edf.ASE)
+% w_edf - структура модовых радиусов для сигнала (w_edf.s), накачки (w_edf.pf и w_edf.PB) и ASE (w_edf.ASE)
 
 % расчет нормированных частот
 V_edf.s                = 2 * pi * r_edf * NA_edf ./ Lambda.s;    % нормированная частота сигнала
@@ -20,58 +19,36 @@ W_edf.s                = (V_edf.s.^2 - U_edf.s.^2).^0.5;
 W_edf.pf               = (V_edf.pf.^2 - U_edf.pf.^2).^0.5;
 W_edf.ase              = (V_edf.ase.^2 - U_edf.ase.^2).^0.5;
 
-% модовые площади
-w_edf.s                = r_edf .* V_edf.s .* besselk(1, W_edf.s)...    % модовая площадь (сигнал)
+% модовые радиусы
+w_edf.s                = 1.2*r_edf .* V_edf.s .* besselk(1, W_edf.s)...    % модовый радиус (сигнал)
     .* besselj(0, U_edf.s) ./ (U_edf.s .* besselk(0, W_edf.s)); 
-w_edf.pf               = r_edf .* V_edf.pf .* besselk(1, W_edf.pf)...  % модовая площадь (попутная накачка)
+w_edf.pf               = 1.2*r_edf .* V_edf.pf .* besselk(1, W_edf.pf)...  % модовый радиус (попутная накачка)
     .* besselj(0, U_edf.pf) ./ (U_edf.pf .* besselk(0, W_edf.pf));
-w_edf.ase              = r_edf .* V_edf.ase .* besselk(1, W_edf.ase)...% модовая площадь (ASE)
+w_edf.ase              = 1.2*r_edf .* V_edf.ase .* besselk(1, W_edf.ase)...% модовый радиус (ASE)
     .* besselj(0, U_edf.ase) ./ (U_edf.ase .* besselk(0, W_edf.ase));
 
 % расчет зависимости функций распределения интенсивности от расстояния от центра волокна
 % для  r < r_edf
 r  = 0 : r_edf / N0 : r_edf;
-n_r   = size(r,2);                                           % размер массива
+n_r   = size(r,2);                           % размер массива
 
-psi.s(1: N.s,1: n_r)     = (besselj(0, (repmat(U_edf.s',1,n_r)...  
-    .* repmat(r, N.s,1)) / r_edf)).^2; 
-psi.pf(1: N.pf,1: n_r)   = (besselj(0, (repmat(U_edf.pf',1,n_r)...
-    .* repmat(r, N.pf,1)) / r_edf)).^2;
-psi.ase(1: N.ase,1: n_r) = (besselj(0, (repmat(U_edf.ase',1,n_r)...
-    .* repmat(r, N.ase,1)) / r_edf)).^2;
-psi.ns             = psi.s ./ pi ./ w_edf.s'.^2;                       % нормированная функция распределения (сигнал)
-psi.npf            = psi.pf ./ pi ./ w_edf.pf'.^2;                     % нормированная функция распределения (попутная накачка)
-psi.nase           = psi.ase ./ pi ./ w_edf.ase'.^2;                   % нормированная функция распределения (ASE)
+psi.s(1: N.s,1: n_r)     = (besselj(0, (repmat(U_edf.s',1,n_r) .* repmat(r, N.s,1)) / r_edf)).^2; 
+psi.pf(1: N.pf,1: n_r)   = (besselj(0, (repmat(U_edf.pf',1,n_r) .* repmat(r, N.pf,1)) / r_edf)).^2;
+psi.ase(1: N.ase,1: n_r) = (besselj(0, (repmat(U_edf.ase',1,n_r) .* repmat(r, N.ase,1)) / r_edf)).^2;
 
+psi.ns    = psi.s ./ pi ./ w_edf.s'.^2;      % нормированная функция распределения (сигнал)
+psi.npf   = psi.pf ./ pi ./ w_edf.pf'.^2;    % нормированная функция распределения (попутная накачка)
+psi.nase  = psi.ase ./ pi ./ w_edf.ase'.^2;  % нормированная функция распределения (ASE)
+
+% расчет параметров для встречной накачки, если она есть
 if isempty(Lambda.pb) == 0
-    V_edf.pb               = 2 * pi * r_edf * NA_edf ./ Lambda.pb;   % нормированная частота встречной накачки
-    U_edf.pb               = (1 + sqrt(2)) .* V_edf.pb ./ (1 + (4 + V_edf.pb.^4).^0.25);
-    W_edf.pb               = (V_edf.pb.^2 - U_edf.pb.^2).^0.5;
-    w_edf.pb               = r_edf .* V_edf.pb .* besselk(1, W_edf.pb)...  % модовая площадь (встречная накачка)
+    V_edf.pb = 2 * pi * r_edf * NA_edf ./ Lambda.pb;   % нормированная частота встречной накачки
+    U_edf.pb = (1 + sqrt(2)) .* V_edf.pb ./ (1 + (4 + V_edf.pb.^4).^0.25);
+    W_edf.pb = (V_edf.pb.^2 - U_edf.pb.^2).^0.5;
+    w_edf.pb = r_edf .* V_edf.pb .* besselk(1, W_edf.pb)...  % модовый радиус (встречная накачка)
     .* besselj(0, U_edf.pb) ./ (U_edf.pb .* besselk(0, W_edf.pb));
-psi.pb(1: N.pb,1: n_r)   = (besselj(0, (repmat(U_edf.pb',1,n_r)...
-    .* repmat(r, N.pb,1)) / r_edf)).^2;
-psi.npb            = psi.pb ./ pi ./ w_edf.pb'.^2;                     % нормированная функция распределения (встречная накачка)
+    psi.pb(1: N.pb,1: n_r)   = (besselj(0, (repmat(U_edf.pb',1,n_r) .* repmat(r, N.pb,1)) / r_edf)).^2;
+    psi.npb            = psi.pb ./ pi ./ w_edf.pb'.^2;       % нормированная функция распределения (встречная накачка)
 end
-% для  r>a
-% r_more_a = r_edf: dr : 10^(-5);
-% n_r_ma   = size(r_more_a,2);                                          % размер массива
-% 
-% psi.S(1: N.S,n_r_la+1: n_r_la+n_r_ma)     = (besselk(0,(repmat(W_edf.S',1,n_r_ma) .*...
-%     repmat(r_more_a, N.S,1)) / r_edf)).^2 .* besselj(0, repmat(U_edf.S',1,n_r_ma)).^2 ./...
-%     besselk(0, repmat(W_edf.S',1,n_r_ma)).^2;  
-% psi.PF(1: N.PF,n_r_la+1: n_r_la+n_r_ma)   = (besselk(0,(repmat(W_edf.PF',1,n_r_ma)...
-%     .* repmat(r_more_a, N.PF,1)) / r_edf)).^2 .* besselj(0, repmat(U_edf.PF',1,n_r_ma)).^2 ./...
-%     besselk(0, repmat(W_edf.PF',1,n_r_ma)).^2;
-% psi.PB(1: N.PB,n_r_la+1: n_r_la+n_r_ma)   = (besselk(0,(repmat(W_edf.PB',1,n_r_ma)...
-%     .* repmat(r_more_a, N.PB,1)) / r_edf)).^2 .* besselj(0, repmat(U_edf.PB',1,n_r_ma)).^2 ./...
-%     besselk(0, repmat(W_edf.PB',1,n_r_ma)).^2;
-% psi.ASE(1: N.ASE,n_r_la+1: n_r_la+n_r_ma) = (besselk(0,(repmat(W_edf.ASE',1,n_r_ma)...
-%     .* repmat(r_more_a, N.ASE,1)) / r_edf)).^2 .* besselj(0, repmat(U_edf.ASE',1,n_r_ma)).^2 ./...
-%     besselk(0, repmat(W_edf.ASE',1,n_r_ma)).^2;
-% psi.NS              = psi.S ./ pi ./ w_edf.S'.^2;    % нормированная функция распределения (сигнал)
-% psi.NPF             = psi.PF ./ pi ./ w_edf.PF'.^2;  % нормированная функция распределения (попутная накачка)
-% psi.NPB             = psi.PB ./ pi ./ w_edf.PB'.^2;  % нормированная функция распределения (встречная накачка)
-% psi.NASE            = psi.ASE ./ pi ./ w_edf.ASE'.^2;% нормированная функция распределения (ASE)
 
 end

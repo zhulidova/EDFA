@@ -7,6 +7,8 @@
 % •	N0 – структура, содержащая значения количества точек разбиения диапазона длин волн для расчета шума, количества точек дискретизации 
 % радиуса сердцевины волокна (шаг интегрирования по радиусу), количества точек дискретизации длины волокна (предварительный шаг интегрирования по 
 % длине волокна). 
+% type - тип волокна, используется 'OFSR37003X'
+% T_c  - температура окружающей среды, °С
 %
 % Шаблон 
 % Pin.s = []*10^(-3);     % Мощности сигналов, Вт
@@ -20,7 +22,8 @@
 % N.ase = 20;             % Число точек по длине волны (для расчета шума) 
 % N.z = 50;               % Число точек по z (для интегрирования)
 % N.r = 25;               % Число точек по r
-% type = 'OFS980';        % Тип активного волокна
+% type = 'OFSR37003X';    % Тип активного волокна
+% T_c  = 25;              % Температура окружающей среды, °С
 
 %% Выходные параметры
 % •	z – массив значений длины волокна, на которых производился расчет параметров. 
@@ -50,27 +53,42 @@
 % gain(...)          - функция расчета коэффициента усиления
 % nf(...)            - функция расчета шум-фактора
 
-function [z, P, Gain, OSNR, NF, SPase] = edfa(Pin, Lambda, Lambda_range, L, N0, type) 
+function [z, P, Gain, OSNR, NF, SPase] = edfa(Pin, Lambda, Lambda_range, L, N0, type,T_c)
 
 % Физические константы
-ph_const.c      = 299792458;                                         % скорость света    
+ph_const.c      = 299792458;                                         % скорость света
 ph_const.h      = 6.626E-34;                                         % постоянная Планка
-ph_const.tau    = 0.0102;                                            % время жизни на верхнем уровне
+ph_const.tau2   = 0.0102;                                            % время жизни на 2-ом уровне I(13/2)
+ph_const.tau3   = 5.2*10^(-6);                                        % время жизни на 3-ем уровне I(11/2)
+ph_const.tau4   = 5*10^(-9);                                           % время жизни на 4-ом уровне I(9/2)
 ph_const.k      = 1.38 * 10^(-23);                                   % постоянная Больцмана
 ph_const.eV     = 1.602 * 10^(-19);                                  % 1 эВ в Дж
 
 % параметры активного волокна
-if strcmp(type,'OFS980')==1
+if strcmp(type,'OFSR37003X')==1
     r_edf       = 2.9E-6 / 2;                                        % радиус сердцевины, м
     NA          = 0.26;                                              % числовая апертура активного волокна
-    n           = 75;                                                % концентрация ионов эрбия, ppm
-end 
+    n           = 145;                                            % концентрация ионов эрбия, ppm
+elseif strcmp(type,'OFSLP980')==1
+    r_edf       = 2.2E-6 / 2;                                        % радиус сердцевины, м
+    NA          = 0.323;                                              % числовая апертура активного волокна
+    n           = 120;                                            % концентрация ионов эрбия, ppm
+
+elseif strcmp(type,'Pnppk_a47')==1
+    r_edf       = 3.13E-6 / 2;                                        % радиус сердцевины, м
+    NA          = 0.2;                                              % числовая апертура активного волокна
+    n           = 185;   
+    
+elseif strcmp(type,'Pnppk_a2')==1
+    r_edf       = 3.2E-6 / 2;                                        % радиус сердцевины, м
+    NA          = 0.2;                                              % числовая апертура активного волокна
+    n           = 600;
+end
 
 % параметры системы
-T_c             = 25;                                                 % температура среды, °С
-splices.wdm_p   = 2.35;                                              % потери на wdm для накачки (datasheet), дБм                         
-splices.wdm_s   = 0.7;                                               % потери на wdm для сигнала (datasheet), дБм                  
-splices.fiber   = 0.5;                                               % потери на сварке
+splices.wdm_p   = 0.0;                                              % потери на wdm для накачки (datasheet), дБм
+splices.wdm_s   = 0.0;                                               % потери на wdm для сигнала (datasheet), дБм
+splices.fiber   = 0.0;                                               % потери на сварке
 low_gain_regime = 0;                                                 % механический выбор режима слабого сигнала
 % 1 - режим слабого сигнала % 0 - общий случай
 
@@ -82,58 +100,58 @@ N.pf            = length(Lambda.pf);                                 % размер ма
 N.ase           = N0.ase;                                            % размер массива длин волн ASE
 N.pb            = length(Lambda.pb);                                 % размер массива длин встречной накачки
 Lambda.ase      = ase_diskr(N.ase,Lambda_range);                     % расчет начальных значений мощности ASE
-sigma           = sigma_lum(T, Lambda, ph_const);                    % расчет сечений
-[psi, w_edf]    = bessel(r_edf, Lambda, N, NA, N0.r);                % волновые функции интенсивности главной моды
+sigma           = sigma_lum(T, Lambda, ph_const, n_sum);             % расчет сечений
+[psi, w_edf]    = bessel(r_edf,Lambda, N, NA, N0.r);                 % волновые функции интенсивности главной моды
 
-%% учет доп. потерь  
+%% учет доп. потерь
 
-[Pin.s, Pin.pf] = splice_loss(dbm(Pin.s), dbm(Pin.pf), Lambda, r_edf, splices, NA); 
+[Pin.s, Pin.pf] = splice_loss(dbm(Pin.s), dbm(Pin.pf), Lambda, r_edf, splices, NA);
 Pin.asef = [];
 Pin.asef = ase_in(Lambda, ph_const, sigma, Pin, n_sum, psi, N, r_edf, N0, L);
-
+Pin.asef = Pin.asef/10;
 %% решение сиситемы ОДУ
-    tStart = cputime;                   % старт таймера
-    if isempty(Lambda.pb) == 1 
+tStart = cputime;                   % старт таймера
+if isempty(Lambda.pb) == 1
     % случай только попуной накачки (задача Коши)
-        if low_gain_regime == 1
+    if low_gain_regime == 1
         % решение упрощенной системы уравнений (режим слабого сигнала)
-            [z, Pout]   = ode45(@(z,P) odu2_unsaturated_gain_regime(z, P, Lambda, sigma, N, w_edf, n_sum, ph_const, Pin,r_edf), [0: L/N0.z: L],[Pin.s Pin.asef  Pin.pf]);
-        else
-        % решение подробной системы уравнений (общий случай)
-            [z, Pout]   = ode45(@(z,P) odu2(z, P, Lambda, sigma, psi, N, n_sum, ph_const, r_edf, N0), [0: L/N0.z: L],[Pin.s Pin.asef Pin.pf]);
-        end
+        [z, Pout]   = ode45(@(z,P) odu2_unsaturated_gain_regime(z, P, Lambda, sigma, N, w_edf, n_sum, ph_const, Pin,r_edf), [0: L/N0.z: L],[Pin.s Pin.asef  Pin.pf]);
     else
-        % случай встречной накачки или комбинированный случай
-        Pin.asef        = Pin.asef + ase_in(Lambda, ph_const, sigma, Pin, n_sum, psi, N, r_edf, N0, L);
-        Pin.aseb        = Pin.asef;
-        [z, Pout]       = chord_method(L, Lambda, sigma, psi, N, w_edf, n_sum, Pin, low_gain_regime, ph_const, r_edf, N0); 
+        % решение подробной системы уравнений (общий случай)
+        [z, Pout]   = ode45(@(z,P) odu2(z, P, Lambda, sigma, psi, N, n_sum, ph_const, r_edf, N0), [0: L/N0.z: L],[Pin.s Pin.asef Pin.pf]);
     end
-    Pout       = Pout / undb(splices.fiber); % реальные выходные мощности сигнала и накачки
-    
-    z          = z';   % Массив значений z
-    % P - структура распределения мощностей по z
-    P.s        = Pout(:, 1: N.s)';                      % Распределение мощностей сигналов
-    Pspec.s    = P.s(:, size(P.s,2));                   % Спектр мощности сигнала в конце волокна
-    P.asef     = Pout(:, N.s+1: N.s+N.ase)';            % Распределение мощности попутных шумов
-    Pspec.asef = P.asef(:, size(P.asef,2));             % Спектр мощности попутных шумов
-    P.pf       = Pout(:, N.s+N.ase+1: N.s+N.ase+N.pf)'; % Распределение мощностей попутных накачек
-    Pspec.pf   = P.pf(:, size(P.pf,2));                 % Спектр мощности попутных накачек
+else
+    % случай встречной накачки или комбинированный случай
+    Pin.asef        = Pin.asef + ase_in(Lambda, ph_const, sigma, Pin, n_sum, psi, N, r_edf, N0, L);
+    Pin.aseb        = Pin.asef;
+    [z, Pout]       = chord_method(L, Lambda, sigma, psi, N, w_edf, n_sum, Pin, low_gain_regime, ph_const, r_edf, N0);
+end
 
-    if isempty(Lambda.pb) == 0
-        P.aseb     = Pout(:, N.s+N.ase+N.pf+1: N.s+2*N.ase+N.pf)';        % Распределение мощности встречных шумов
-        Pspec.aseb = P.aseb(:, size(P.aseb,2));                           % Спектр мощности встречных шумов
-        P.pb       = Pout(:, N.s+2*N.ase+N.pf+1: N.s+2*N.ase+N.pf+N.pb)'; % Распределение мощностей встречных накачек
-        Pspec.pb   = P.pb(:, size(P.pb,2));                               % Спектр мощности встречных накачек
-        Pspec.asef = Pspec.asef + Pin.aseb';
-    end
-    
-    Gain         = gain(Pspec.s, Pin.s');                           % расчет Gain
-    [OSNR, NF]   = nf(Pspec.asef, Gain, Lambda, ph_const, Pspec.s); % расчет NF и OSNR_out
-    SPase.lambda = Lambda.ase';                                     % спектр ASE
-    SPase.p      = dbm(Pspec.asef);
-    
-    time         = cputime - tStart;                                % конец таймера
-    formatSpec   = 'Система ОДУ для EDFA решена за %f секунд\n';                           
-    fprintf(formatSpec,time)
-    
+Pout       = Pout / undb(splices.fiber); % реальные выходные мощности сигнала и накачки
+
+z          = z';   % Массив значений z
+% P - структура распределения мощностей по z
+P.s        = Pout(:, 1: N.s)';                      % Распределение мощностей сигналов
+Pspec.s    = P.s(:, size(P.s,2));                   % Спектр мощности сигнала в конце волокна
+P.asef     = Pout(:, N.s+1: N.s+N.ase)';            % Распределение мощности попутных шумов
+Pspec.asef = P.asef(:, size(P.asef,2));             % Спектр мощности попутных шумов
+P.pf       = Pout(:, N.s+N.ase+1: N.s+N.ase+N.pf)'; % Распределение мощностей попутных накачек
+Pspec.pf   = P.pf(:, size(P.pf,2));                 % Спектр мощности попутных накачек
+
+if isempty(Lambda.pb) == 0
+    P.aseb     = Pout(:, N.s+N.ase+N.pf+1: N.s+2*N.ase+N.pf)';        % Распределение мощности встречных шумов
+    Pspec.aseb = P.aseb(:, size(P.aseb,2));                           % Спектр мощности встречных шумов
+    P.pb       = Pout(:, N.s+2*N.ase+N.pf+1: N.s+2*N.ase+N.pf+N.pb)'; % Распределение мощностей встречных накачек
+    Pspec.pb   = P.pb(:, size(P.pb,2));                               % Спектр мощности встречных накачек
+    Pspec.asef = Pspec.asef + Pin.aseb';
+end
+
+Gain         = gain(Pspec.s, Pin.s');                           % расчет Gain
+[OSNR, NF]   = nf(Pspec.asef, Gain, Lambda, ph_const, Pspec.s); % расчет NF и OSNR_out
+SPase.lambda = Lambda.ase';                                     % спектр ASE
+SPase.p      = dbm(Pspec.asef);
+
+time         = cputime - tStart;                                % конец таймера
+formatSpec   = 'Система ОДУ для EDFA решена за %f секунд\n';
+fprintf(formatSpec,time)
 end
