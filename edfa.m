@@ -53,7 +53,7 @@
 % gain(...)          - функция расчета коэффициента усиления
 % nf(...)            - функция расчета шум-фактора
 
-function [z, P, Gain, OSNR, NF, SPase] = edfa(Pin, Lambda, Lambda_range, L, N0, type,T_c)
+function [z, P, Gain, OSNR, NF, SPase] = edfa(Pin, Lambda, Lambda_range, L, N0, type,T_c,alpha_edfa)
 
 % Физические константы
 ph_const.c      = 299792458;                                         % скорость света
@@ -65,21 +65,12 @@ ph_const.k      = 1.38 * 10^(-23);                                   % постоянна
 ph_const.eV     = 1.602 * 10^(-19);                                  % 1 эВ в Дж
 
 % параметры активного волокна
-if strcmp(type,'OFSR37003X')==1
-    r_edf       = 2.9E-6 / 2;                                        % радиус сердцевины, м
-    NA          = 0.26;                                              % числовая апертура активного волокна
-    n           = 145;                                            % концентрация ионов эрбия, ppm
-elseif strcmp(type,'OFSLP980')==1
-    r_edf       = 2.2E-6 / 2;                                        % радиус сердцевины, м
-    NA          = 0.323;                                              % числовая апертура активного волокна
-    n           = 120;                                            % концентрация ионов эрбия, ppm
-
-elseif strcmp(type,'Pnppk_a47')==1
-    r_edf       = 3.13E-6 / 2;                                        % радиус сердцевины, м
+if strcmp(type,'EDFA_type1')==1
+    r_edf       = 3E-6 / 2;                                        % радиус сердцевины, м
     NA          = 0.2;                                              % числовая апертура активного волокна
-    n           = 185;   
+    n           = 120;   
     
-elseif strcmp(type,'Pnppk_a2')==1
+elseif strcmp(type,'EDFA_type2')==1
     r_edf       = 3.2E-6 / 2;                                        % радиус сердцевины, м
     NA          = 0.2;                                              % числовая апертура активного волокна
     n           = 600;
@@ -103,6 +94,11 @@ Lambda.ase      = ase_diskr(N.ase,Lambda_range);                     % расчет на
 sigma           = sigma_lum(T, Lambda, ph_const, n_sum);             % расчет сечений
 [psi, w_edf]    = bessel(r_edf,Lambda, N, NA, N0.r);                 % волновые функции интенсивности главной моды
 
+% alpha_s(1:N.s,1) = sigma.as * n_sum;
+% alpha_pf(1:N.pf,1) = sigma.apf * n_sum;
+alpha_edfa.s = alpha_edfa.s/10/log10(exp(1));
+alpha_edfa.p = alpha_edfa.p/10/log10(exp(1));
+n_sum = alpha_edfa.p ./ sigma.apf;
 %% учет доп. потерь
 
 [Pin.s, Pin.pf] = splice_loss(dbm(Pin.s), dbm(Pin.pf), Lambda, r_edf, splices, NA);
