@@ -21,6 +21,7 @@ if isempty(Pin.asef) == 0
     psi.pf      = psi.pb;
     psi.npf     = psi.npb;
     N.pf        = N.pb;
+    sigma.bgpf  = sigma.bgpb;
 end
 
 % при расчете ASE есть только одная накачка, попутная
@@ -31,6 +32,7 @@ sigma.epb   = [];
 psi.pb      = [];
 psi.npb     = [];
 N.pb        = [];
+sigma.bgpb  = [];
 Pin.ases    = zeros(1,N.s);
 Pin.asef    = zeros(1,N.ase);
 

@@ -40,10 +40,10 @@ W21       = sum(psi.ns .* repmat(P(1: N.s, 1),1,size(psi.ns,2)) .* repmat(sigma.
     sum(psi.nase .* repmat(P(N.s+1: N.s+N.ase, 1),1,size(psi.nase,2)) .* repmat(sigma.ease',1,size(psi.nase,2))...
     ./ ((repmat(sigma.aase',1,size(psi.nase,2)) + repmat(sigma.ease',1,size(psi.nase,2))) .* repmat(P_sat.ase',1,size(psi.nase,2))),1); 
 
-R24  = sum(psi.ns .* repmat(P(1: N.s, 1),1,size(psi.ns,2)) .* repmat(sigma.esa_eta.*sigma.as',1,size(psi.ns,2)) ./...
+R24  = sum(psi.ns .* repmat(P(1: N.s, 1),1,size(psi.ns,2)) .* repmat(sigma.esa_etaC.*sigma.as',1,size(psi.ns,2)) ./...
     (ph_const.h * ph_const.c * 10^25).* repmat(Lambda.s',1,size(psi.ns,2)),1);
 
-R24  = R24 + sum(psi.nase .* repmat(P(N.s+1: N.s+N.ase, 1),1,size(psi.nase,2)) .* repmat(sigma.esa_eta.*sigma.aase',1,size(psi.nase,2))...
+R24  = R24 + sum(psi.nase .* repmat(P(N.s+1: N.s+N.ase, 1),1,size(psi.nase,2)) .* repmat(sigma.esa_etaC.*sigma.aase',1,size(psi.nase,2))...
     ./ (ph_const.h * ph_const.c * 10^25).*repmat(Lambda.ase',1,size(psi.nase,2)),1);
 
 
@@ -57,7 +57,7 @@ if Lambda.pf(i) > 1450* 10^(-9) % для накачки с длиной волны 1480 нм
     R21  = R21 + psi.npf(i,:) .* P(N.s+N.ase+i, 1) .* sigma.epf(i) ./ (sigma.apf(i) + sigma.epf(i)) ./ P_sat.pf(i);
     
     % учет эффекта ESA для накачки на длине волны 1480 нм (для 980 нм должна быть большая мощность накачки)
-    R24  = R24 + psi.npf(i,:) .* P(N.s+N.ase+i, 1) .* sigma.esa_eta*sigma.apf(i) ./ (ph_const.h * ph_const.c * 10^25).*Lambda.pf(i);
+    R24  = R24 + psi.npf(i,:) .* P(N.s+N.ase+i, 1) .* sigma.esa_etaC*sigma.apf(i) ./ (ph_const.h * ph_const.c * 10^25).*Lambda.pf(i);
 
 
 else                            % для накачки с длиной волны 980 нм
@@ -79,7 +79,7 @@ if isempty(Lambda.pb) == 0
         repmat(sigma.ease',1,size(psi.nase,2))) .* repmat(P_sat.ase',1,size(psi.nase,2))),1);
     
     R24  = R24 + sum(psi.nase .* repmat(P(N.s+N.ase+N.pf+1: N.s+2*N.ase+N.pf, 1),1,size(psi.nase,2)) .*...
-        repmat(sigma.esa_eta.*sigma.aase',1,size(psi.nase,2)) ./ (ph_const.h * ph_const.c * 10^25).* ...
+        repmat(sigma.esa_etaC.*sigma.aase',1,size(psi.nase,2)) ./ (ph_const.h * ph_const.c * 10^25).* ...
         repmat(Lambda.ase',1,size(psi.nase,2)),1);
 
     for i = 1:length(Lambda.pb)
@@ -92,7 +92,7 @@ if isempty(Lambda.pb) == 0
             R21  = R21 + psi.npb(i,:) .* P(N.s+2*N.ase+N.pf+i,1) .*  sigma.epb(i) ./ (sigma.apb(i) + sigma.epb(i)) ./ P_sat.pb(i);
             
             % учет эффекта ESA для накачки на длине волны 1480 нм (для 980 нм должна быть большая мощность накачки)
-            R24  = R24 + psi.npb(i,:) .* P(N.s+2*N.ase+N.pf+i,1) .* sigma.esa_eta*sigma.apb(i) ./ (ph_const.h * ph_const.c * 10^25) .* Lambda.pb(i);
+            R24  = R24 + psi.npb(i,:) .* P(N.s+2*N.ase+N.pf+i,1) .* sigma.esa_etaC*sigma.apb(i) ./ (ph_const.h * ph_const.c * 10^25) .* Lambda.pb(i);
         else                             % для накачки с длиной волны 980 нм
             
             % скорость вынужденного перехода с поглощением излучения для накачки
@@ -110,7 +110,7 @@ end
 %% Расчет населенностей четырехуровневой системы (расширение двухуровневой системы путем учета апконверсии и ESA)
 
 % учет кооперативной апконверсии
-C24 = (2.65 * n_sum * 0.1 + 3.38) * 10; % учет кооперативной апконверсии с уровня 2 на 4 (1-ое слагаемое:
+C24 = (1.6 * n_sum * 0.1 + 1.9) * 10; % учет кооперативной апконверсии с уровня 2 на 4 (1-ое слагаемое:
                                         % коэффициент двухчастичной апконверсии, зависит от концентрации;
                                         % 2-ое слагаемое: коэффициент ветвления между переходом I(11/2)-I(15/2) (980 нм)
                                         % и переходом I(11/2)-I(13/2) (безызлучательный переход))
